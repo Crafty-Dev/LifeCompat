@@ -7,10 +7,10 @@ Adding new Buckets is rather simple. Just create your Bucket Items and register 
 For example, if you want to add new wooden Buckets, look at this code:
 ```java
 BucketCompatibility.registerBucketGroup(
-ResourceLocation.fromNamespaceAndPath(your_mod_id_here, "wood"), // Here you register the Id of your Group
-ModItems.WOODEN_BUCKET, //And here you add your items
-ModItems.WOODEN_WATER_BUCKET,
-ModItems.WOODEN_POWDER_SNOW_BUCKET
+        ResourceLocation.fromNamespaceAndPath(your_mod_id_here, "wood"), // Here you register the Id of your Group
+        ModItems.WOODEN_BUCKET,
+        ModItems.WOODEN_WATER_BUCKET,                                    //And here you add your items
+        ModItems.WOODEN_POWDER_SNOW_BUCKET
 );
 
 ```
