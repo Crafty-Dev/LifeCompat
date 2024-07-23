@@ -1,0 +1,23 @@
+{
+  "required": true,
+  "package": "de.crafty.lifecompat.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "server.MixinMinecraftServer",
+    "server.level.MixinServerLevel",
+    "server.level.MixinServerPlayer",
+    "server.level.MixinServerPlayerGameMode",
+    "server.players.MixinPlayerList",
+    "world.entity.MixinEntity",
+    "world.entity.MixinPlayer",
+    "world.item.MixinBucketItem",
+    "world.item.MixinSolidBucketItem"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "MixinMinecraft",
+    "client.multiplayer.MixinMultiPlayerGameMode"
+  ]
+}
