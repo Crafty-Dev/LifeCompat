@@ -93,7 +93,7 @@ public abstract class MixinEntity {
     }
 }
 ```
-The `EventManager.callEvent` method takes 2 arguments. A reference to the event you've just created and a new Callback of this event, that is also returned by the method to resolve callback differences and handle things like event cancelling.
+The `EventManager.callEvent` method takes 2 arguments. A reference to the event you've just created and a new Callback of this event, which is also returned by the method to resolve callback differences and handle things like event cancelling.
 In our case we use `YourModEvents.ENTITY_REMOVE` as the reference and `new EntityRemoveEvent.Callback((Entity) (Object) this, this.level, reason)` as the callback.
 
 Congratulations!, you successfully created a new event.
