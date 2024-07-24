@@ -1,6 +1,7 @@
 package de.crafty.lifecompat.mixin.world.item;
 
 import de.crafty.lifecompat.api.bucket.BucketCompatibility;
+import de.crafty.lifecompat.api.bucket.IFluidProvider;
 import net.fabricmc.fabric.mixin.transfer.BucketItemAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
@@ -23,9 +24,15 @@ public abstract class MixinBucketItem extends Item implements DispensibleContain
 
     @Redirect(method = "use", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/BucketPickup;pickupBlock(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack injectCompatibility(BucketPickup instance, Player playerEntity, LevelAccessor worldAccess, BlockPos blockPos, BlockState state){
-        ItemStack stack = instance.pickupBlock(playerEntity, worldAccess, blockPos, state);
         ItemStack used = playerEntity.getItemInHand(playerEntity.getUsedItemHand());
-        System.out.println(stack.getItem());
+        if(state.getBlock() instanceof IFluidProvider fluidProvider && BucketCompatibility.getFilledBucket((BucketItem) used.getItem(), fluidProvider.lifeCompat$provideFluid(worldAccess, blockPos, state)) == ItemStack.EMPTY)
+            return ItemStack.EMPTY;
+
+        if(!(state.getBlock() instanceof IFluidProvider) && BucketCompatibility.getFilledBucket((BucketItem) used.getItem(), state.getBlock()) == ItemStack.EMPTY)
+            return ItemStack.EMPTY;
+
+        ItemStack stack = instance.pickupBlock(playerEntity, worldAccess, blockPos, state);
+
         if(stack.getItem() instanceof BucketItem)
             return BucketCompatibility.getFilledBucket((BucketItem) used.getItem(), ((BucketItemAccessor)stack.getItem()).fabric_getFluid());
         if(stack.getItem() instanceof SolidBucketItem)

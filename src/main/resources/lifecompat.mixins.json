@@ -11,7 +11,10 @@
     "world.entity.MixinEntity",
     "world.entity.MixinPlayer",
     "world.item.MixinBucketItem",
-    "world.item.MixinSolidBucketItem"
+    "world.item.MixinSolidBucketItem",
+    "world.level.block.MixinBubbleColumnBlock",
+    "world.level.block.MixinLiquidBlock",
+    "world.level.block.MixinSimpleWaterloggedBlock"
   ],
   "injectors": {
     "defaultRequire": 1

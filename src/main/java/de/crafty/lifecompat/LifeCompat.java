@@ -20,7 +20,7 @@ public class LifeCompat implements ModInitializer {
 	public void onInitialize() {
 		LOGGER.info("Hello Minecraft!");
 
-		BucketCompatibility.registerFluidBucketGroup(ResourceLocation.withDefaultNamespace("iron"), Items.BUCKET, Items.WATER_BUCKET, Items.LAVA_BUCKET, Items.POWDER_SNOW_BUCKET);
+		BucketCompatibility.registerBucketGroup(ResourceLocation.withDefaultNamespace("iron"), Items.BUCKET, Items.WATER_BUCKET, Items.LAVA_BUCKET, Items.POWDER_SNOW_BUCKET);
 
 		EventManager.registerListener(BaseEvents.GAME_POST_INIT, new PostInitListener());
 	}
