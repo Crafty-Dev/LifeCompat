@@ -25,4 +25,25 @@ The only thing you have to know is the name of the existing Group. In our exampl
         );
 ```
 Et voilà! There you have your own Buckets added to the Game.
+## Listen to Events
+As mentioned before there is a usefull Set of Basic Events you can find in the `BaseEvents` class.
+To listen to one of these simply create a class that implements the `EventListener` from the package `de.crafty.lifecompat.api.event` and give it the correct Callback as the generic Parameter.
+For example, if you want to create an Event Listener that listens for Block Break Events look at the following code:
+```java
+import de.crafty.lifecompat.api.event.EventListener;
+import de.crafty.lifecompat.events.block.BlockBreakEvent;
 
+public class BlockBreakListener implements EventListener<BlockBreakEvent.Callback> {
+
+
+    @Override
+    public void onEventCallback(BlockBreakEvent.Callback callback) {
+        //Code to be executed
+    }
+```
+The `EventListener` interface forces you to override the `onEventCallback` method. This method is called whenever the event is called.
+The `callback` parameter contains all the relevant data associated with the event.
+### Modifiable Event Callbacks
+Some Callbacks allow you to change their data, which results in a different game behaviour.
+For example, the BlockBreakEvent is cancellable, so the execution of the action (breaking the block) can be prevented by calling `callback.setCancelled(true)`.
+## Create custom Events
