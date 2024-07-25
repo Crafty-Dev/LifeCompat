@@ -26,6 +26,10 @@ The only thing you have to know is the name of the existing Group. In our exampl
         );
 ```
 Et voilà! There you have your own Buckets added to the Game.
+### Info for custom Fluid storages (Tanks, Mod Blocks that can hold fluids, ...)
+If you add a custom Block, that should be able to interact with buckets and does not just expand Minecraft's Fluid Blocks like `LiquidBlock` or `SimpleWaterloggableBlock`, consider implementing the `IFluidProvider` interface to ensure that everything concerning Buckets works perfectly. Otherwise it could be, that only the vanilla buckets work.
+
+**Another last Hint**: When you implement Minecraft's `BucketPickup` interface, you don't need to return custom buckets by yourself. Just return the vanilla ones (or custom buckets that belong to the vanilla group) and you will be fine.
 ## Listen to Events
 As mentioned before there is a usefull Set of Basic Events you can find in the `BaseEvents` class.
 To listen to one of these, simply create a class that implements the `EventListener` interface from the package `de.crafty.lifecompat.api.event` and give it the correct Callback as the generic Parameter.
