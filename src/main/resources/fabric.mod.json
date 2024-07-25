@@ -1,32 +1,32 @@
 {
-	"schemaVersion": 1,
-	"id": "lifecompat",
-	"version": "${version}",
-	"name": "LifeCompat",
-	"description": "A Compatibility Mod designed to simplify essential Modding Processes like events, bucket compatibility, and Energy",
-	"authors": [
-		"Crafty"
-	],
-	"contact": {
-	},
-	"license": "CC0-1.0",
-	"icon": "assets/lifecompat/icon.png",
-	"environment": "*",
-	"entrypoints": {
-		"main": [
-			"de.crafty.lifecompat.LifeCompat"
-		]
-	},
-	"mixins": [
-		"lifecompat.mixins.json"
-	],
-	"depends": {
-		"fabricloader": ">=0.15.11",
-		"minecraft": "~1.21",
-		"java": ">=21",
-		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
-	}
+  "schemaVersion": 1,
+  "id": "lifecompat",
+  "version": "${version}",
+  "name": "LifeCompat",
+  "description": "A Compatibility Mod designed to simplify essential Modding Processes like events, bucket compatibility, and Energy",
+  "authors": [
+    "Crafty"
+  ],
+  "contact": {
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/lifecompat/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "de.crafty.lifecompat.LifeCompat"
+    ]
+  },
+  "accessWidener": "lifecompat.accesswidener",
+  "mixins": [
+    "lifecompat.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "minecraft": "~1.21",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+  }
 }
