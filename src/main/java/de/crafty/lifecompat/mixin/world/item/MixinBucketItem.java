@@ -2,7 +2,6 @@ package de.crafty.lifecompat.mixin.world.item;
 
 import de.crafty.lifecompat.api.bucket.BucketCompatibility;
 import de.crafty.lifecompat.api.bucket.IFluidProvider;
-import net.fabricmc.fabric.mixin.transfer.BucketItemAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
@@ -34,7 +33,7 @@ public abstract class MixinBucketItem extends Item implements DispensibleContain
         ItemStack stack = instance.pickupBlock(playerEntity, worldAccess, blockPos, state);
 
         if(stack.getItem() instanceof BucketItem)
-            return BucketCompatibility.getFilledBucket((BucketItem) used.getItem(), ((BucketItemAccessor)stack.getItem()).fabric_getFluid());
+            return BucketCompatibility.getFilledBucket((BucketItem) used.getItem(), ((BucketItem) stack.getItem()).content);
         if(stack.getItem() instanceof SolidBucketItem)
             return BucketCompatibility.getFilledBucket((BucketItem) used.getItem(), ((SolidBucketItem) stack.getItem()).getBlock());
 

@@ -1,7 +1,6 @@
 package de.crafty.lifecompat.api.bucket;
 
 import de.crafty.lifecompat.LifeCompat;
-import net.fabricmc.fabric.mixin.transfer.BucketItemAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.cauldron.CauldronInteraction;
 import net.minecraft.core.dispenser.BlockSource;
@@ -92,9 +91,9 @@ public class BucketCompatibility {
         HashMap<Fluid, BucketItem> fluidCompat = new HashMap<>();
         HashMap<Block, SolidBucketItem> solidCompat = new HashMap<>();
         for (Item bucket : buckets) {
-            if (bucket instanceof BucketItem) {
-                Fluid fluid = ((BucketItemAccessor) bucket).fabric_getFluid();
-                fluidCompat.put(fluid, (BucketItem) bucket);
+            if (bucket instanceof BucketItem bucketItem) {
+                Fluid fluid = bucketItem.content;
+                fluidCompat.put(fluid, bucketItem);
             }
             if (bucket instanceof SolidBucketItem solidBucket) {
                 Block block = solidBucket.getBlock();
@@ -244,8 +243,8 @@ public class BucketCompatibility {
                 BlockState blockState = worldAccess.getBlockState(blockPos);
                 if (blockState.getBlock() instanceof BucketPickup fluidDrainable) {
                     ItemStack itemStack = fluidDrainable.pickupBlock(null, worldAccess, blockPos, blockState);
-                    if (itemStack.getItem() instanceof BucketItem)
-                        itemStack = bucketGroup.getFilledBucket(((BucketItemAccessor) itemStack.getItem()).fabric_getFluid());
+                    if (itemStack.getItem() instanceof BucketItem bucketItem)
+                        itemStack = bucketGroup.getFilledBucket(bucketItem.content);
                     if (itemStack.getItem() instanceof SolidBucketItem)
                         itemStack = bucketGroup.getFilledBucket(((SolidBucketItem) itemStack.getItem()).getBlock());
 

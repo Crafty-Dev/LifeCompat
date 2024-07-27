@@ -1,6 +1,7 @@
 plugins {
 	id 'fabric-loom' version '1.7-SNAPSHOT'
 	id 'maven-publish'
+	id "com.modrinth.minotaur" version "2.+"
 }
 
 version = project.mod_version
@@ -82,4 +83,20 @@ publishing {
 
 loom {
 	accessWidenerPath = file("src/main/resources/lifecompat.accesswidener")
+}
+
+import com.modrinth.minotaur.dependencies.ModDependency
+
+modrinth {
+	token = System.getenv('MODRINTH_TOKEN') // Please use an environment variable for this! The default is `$MODRINTH_TOKEN`.
+	projectId = 'nbpxetz7' // The ID of your Modrinth project. Slugs will not work.
+	versionNumber = String.valueOf(project.version) // The (preferably SemVer) version of the mod. If not specified, it'll use the `version` declaration
+	versionName = 'LifeCompat-1.21-Fabric' // The version title. If not specified, it'll use the version number
+	versionType = 'release'
+	uploadFile = remapJar // Tells Minotaur to use the remapped jar
+	gameVersions = ['1.21'] // An array of game versions the version supports
+	loaders = ['fabric'] // Self-explanatory.
+	dependencies = [
+			new ModDependency('P7dR8mSH', 'required') // Creates a new required dependency on Fabric API
+	]
 }
