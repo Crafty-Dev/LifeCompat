@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MinecraftServer.class)
-public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<TickTask> implements ServerInfo, ChunkIOErrorReporter, CommandSource, AutoCloseable {
+public abstract class   MixinMinecraftServer extends ReentrantBlockableEventLoop<TickTask> implements ServerInfo, ChunkIOErrorReporter, CommandSource, AutoCloseable {
     public MixinMinecraftServer(String string) {
         super(string);
     }
@@ -31,6 +31,6 @@ public abstract class MixinMinecraftServer extends ReentrantBlockableEventLoop<T
 
     @Inject(method = "runServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;buildServerStatus()Lnet/minecraft/network/protocol/status/ServerStatus;", shift = At.Shift.AFTER))
     private void hookIntoGameLoad(CallbackInfo ci){
-        EventManager.callEvent(BaseEvents.GAME_POST_INIT, new GamePostInitEvent.Callback(null));
+        EventManager.callEvent(BaseEvents.GAME_POST_INIT, new GamePostInitEvent.Callback());
     }
 }

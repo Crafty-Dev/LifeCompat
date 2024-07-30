@@ -29,7 +29,7 @@ public interface IEnergyConsumer {
      * @param energy The amount of energy this consumer received (Already in range of its maximum input)
      * @return The overflow that couldn't fit into this block's energy storage
      */
-    int receiveEnergy(ServerLevel level, BlockPos pos, BlockState state, int energy);
+    int receiveEnergy(ServerLevel level, BlockPos pos, BlockState state, Direction from, int energy);
 
     //Returns the amount of energy currently consumed by this block
     int getConsumptionPerTick(ServerLevel world, BlockPos pos, BlockState state);

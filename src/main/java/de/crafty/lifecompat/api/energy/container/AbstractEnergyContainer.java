@@ -12,6 +12,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,6 +26,11 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
     private final int energyCapacity;
     private int energy;
     private final List<Direction> lastTransferredDirections = new ArrayList<>();
+
+    //Blocks the output to the specified when the block recently received energy from there
+    //Prevents infinite "push-pull" loops
+    //Lasts one tick
+    private final List<Direction> blockOutput = new ArrayList<>();
 
     public AbstractEnergyContainer(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState, int energyCapacity) {
         super(blockEntityType, blockPos, blockState);
@@ -43,7 +49,7 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
     }
 
     @Override
-    public int receiveEnergy(ServerLevel level, BlockPos pos, BlockState state, int energy) {
+    public int receiveEnergy(ServerLevel level, BlockPos pos, BlockState state, Direction from, int energy) {
         if (!this.isAccepting(level, pos, state))
             return energy;
 
@@ -52,6 +58,9 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
         int updated = this.energy + clampedInput;
         this.energy = Math.min(updated, this.getCapacity(level, pos, state));
         this.setChanged();
+        level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+        if(!this.blockOutput.contains(from))
+            this.blockOutput.add(from);
 
         return (updated - this.energy) + (energy - clampedInput);
     }
@@ -64,6 +73,11 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
 
         boolean changed = false;
         for(Direction outputSide : AbstractEnergyProvider.getSortedOutputs(this, level, pos, state, this.lastTransferredDirections)){
+            if(this.blockOutput.remove(outputSide)){
+                System.out.println("Skipped");
+                continue;
+            }
+
             BlockPos consumerPos = pos.relative(outputSide);
             int transferred = AbstractEnergyProvider.transferEnergy(level, consumerPos, level.getBlockState(consumerPos), transferable, outputSide.getOpposite());
             this.energy -= transferred;
@@ -77,8 +91,10 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
             transferable -= transferred;
         }
 
-        if(changed)
+        if(changed){
             this.setChanged();
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+        }
     }
 
     @Override

@@ -3,12 +3,14 @@ package de.crafty.lifecompat.api.energy.consumer;
 import de.crafty.lifecompat.api.energy.IEnergyConsumer;
 import de.crafty.lifecompat.api.energy.IEnergyHolder;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,7 +38,7 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
     }
 
     @Override
-    public int receiveEnergy(ServerLevel level, BlockPos pos, BlockState state, int energy) {
+    public int receiveEnergy(ServerLevel level, BlockPos pos, BlockState state, Direction from, int energy) {
         if(!this.isAccepting(level, pos, state))
             return energy;
 
@@ -45,6 +47,7 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
         int updated = this.energy + clampedInput;
         this.energy = Math.min(updated, this.getCapacity(level, pos, state));
         this.setChanged();
+        level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
 
         return (updated - this.energy) + (energy - clampedInput);
     }
@@ -58,6 +61,7 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
             this.energy -= consumption;
             this.performAction(level, pos, state);
             this.setChanged();
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
 

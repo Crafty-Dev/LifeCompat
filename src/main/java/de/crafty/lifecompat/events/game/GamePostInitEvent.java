@@ -13,7 +13,7 @@ public class GamePostInitEvent extends Event<GamePostInitEvent.Callback> {
         super(ResourceLocation.fromNamespaceAndPath(LifeCompat.MODID, "game_post_init"));
     }
 
-    public record Callback(Minecraft.GameLoadCookie gameLoadCookie) implements EventCallback {
+    public record Callback() implements EventCallback {
 
     }
 }

@@ -11,6 +11,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -46,6 +47,7 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
         if(this.isGenerating(level, pos, state)){
             this.energy = Math.min(this.energy + this.getGenerationPerTick(level, pos, state), this.getCapacity(level, pos, state));
             this.setChanged();
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
 
         if(!this.isTransferring(level, pos, state))
@@ -68,8 +70,10 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
             transferable -= transferred;
         }
 
-        if(changed)
+        if(changed){
             this.setChanged();
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+        }
     }
 
 
@@ -89,7 +93,7 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
         if(!consumer.getInputDirections(level, pos, state).contains(side) || !consumer.isAccepting(level, pos, state))
             return 0;
 
-        return energy - consumer.receiveEnergy(level, pos, state, energy);
+        return energy - consumer.receiveEnergy(level, pos, state, side, energy);
     }
 
     public static List<Direction> getSortedOutputs(IEnergyProvider provider, ServerLevel level, BlockPos pos, BlockState state, List<Direction> lastTransferredDirections) {
