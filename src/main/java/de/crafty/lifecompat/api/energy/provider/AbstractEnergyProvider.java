@@ -54,6 +54,8 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
             return;
 
         int transferable = Math.min(this.energy, this.getMaxOutput(level, pos, state));
+        if(transferable == 0)
+            return;
 
         boolean changed = false;
         for(Direction outputSide : AbstractEnergyProvider.getSortedOutputs(this, level, pos, state, this.lastTransferredDirections)){

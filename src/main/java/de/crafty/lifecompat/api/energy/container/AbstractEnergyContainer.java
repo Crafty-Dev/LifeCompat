@@ -38,8 +38,15 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
         this.energyCapacity = energyCapacity;
     }
 
+    //Returns the energy capacity depending on the block itself
+    //Maybe usefull for upgrades, etc...
     @Override
     public int getCapacity(ServerLevel level, BlockPos pos, BlockState state) {
+        return this.energyCapacity;
+    }
+
+    //Returns the standard energy capacity
+    public int getStandardEnergyCapacity() {
         return this.energyCapacity;
     }
 
@@ -59,7 +66,7 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
         this.energy = Math.min(updated, this.getCapacity(level, pos, state));
         this.setChanged();
         level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        if(!this.blockOutput.contains(from))
+        if(!this.blockOutput.contains(from) && (level.getBlockEntity(pos.relative(from)) instanceof IEnergyHolder holder && holder.getStoredEnergy() >= this.getStoredEnergy()))
             this.blockOutput.add(from);
 
         return (updated - this.energy) + (energy - clampedInput);
@@ -70,13 +77,14 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
             return;
 
         int transferable = Math.min(this.energy, this.getMaxOutput(level, pos, state));
+        if(transferable == 0)
+            return;
 
         boolean changed = false;
         for(Direction outputSide : AbstractEnergyProvider.getSortedOutputs(this, level, pos, state, this.lastTransferredDirections)){
-            if(this.blockOutput.remove(outputSide)){
-                System.out.println("Skipped");
+            if(this.blockOutput.remove(outputSide))
                 continue;
-            }
+
 
             BlockPos consumerPos = pos.relative(outputSide);
             int transferred = AbstractEnergyProvider.transferEnergy(level, consumerPos, level.getBlockState(consumerPos), transferable, outputSide.getOpposite());

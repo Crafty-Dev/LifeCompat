@@ -9,12 +9,15 @@
   ],
   "contact": {
   },
-  "license": "CC0-1.0",
+  "license": "MIT",
   "icon": "assets/lifecompat/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
       "de.crafty.lifecompat.LifeCompat"
+    ],
+    "client": [
+      "de.crafty.lifecompat.LifeCompatClient"
     ]
   },
   "accessWidener": "lifecompat.accesswidener",

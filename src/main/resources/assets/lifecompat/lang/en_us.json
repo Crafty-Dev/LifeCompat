@@ -1,0 +1,14 @@
+{
+  "energy.lifecompat.stored": "Stored Energy",
+  "energy.lifecompat.io.front": "Front",
+  "energy.lifecompat.io.left": "Left",
+  "energy.lifecompat.io.back": "Back",
+  "energy.lifecompat.io.right": "Right",
+  "energy.lifecompat.io.top": "Top",
+  "energy.lifecompat.io.bottom": "Bottom",
+
+  "energy.lifecompat.io.input": "Input",
+  "energy.lifecompat.io.output": "Output",
+  "energy.lifecompat.io.io": "I/O",
+  "energy.lifecompat.io.none": "Disabled"
+}
