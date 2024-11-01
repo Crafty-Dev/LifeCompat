@@ -4,6 +4,7 @@ import de.crafty.lifecompat.api.event.EventManager;
 import de.crafty.lifecompat.events.block.BlockBreakEvent;
 import de.crafty.lifecompat.events.block.BlockChangeEvent;
 import de.crafty.lifecompat.events.block.BlockInteractEvent;
+import de.crafty.lifecompat.events.blockentity.BlockEntityLoadEvent;
 import de.crafty.lifecompat.events.entity.EntityRemoveEvent;
 import de.crafty.lifecompat.events.game.GamePostInitEvent;
 import de.crafty.lifecompat.events.item.ItemDropEvent;
@@ -33,6 +34,9 @@ public class BaseEvents {
     public static final BlockChangeEvent BLOCK_CHANGE = EventManager.registerEvent(new BlockChangeEvent());
     public static final BlockInteractEvent BLOCK_INTERACT = EventManager.registerEvent(new BlockInteractEvent());
     public static final BlockBreakEvent BLOCK_BREAK = EventManager.registerEvent(new BlockBreakEvent());
+
+    //BlockEntity
+    public static final BlockEntityLoadEvent BLOCK_ENTITY_LOAD = EventManager.registerEvent(new BlockEntityLoadEvent());
 
     //World
     public static final WorldStartupEvent WORLD_STARTUP = EventManager.registerEvent(new WorldStartupEvent());

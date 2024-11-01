@@ -28,6 +28,7 @@ public abstract class MixinMultiPlayerGameMode {
     @Inject(method = "useItem", at = @At("HEAD"), cancellable = true)
     private void hookIntoItemUse(Player player, InteractionHand interactionHand, CallbackInfoReturnable<InteractionResult> cir) {
         ItemUseEvent.Callback callback = EventManager.callEvent(BaseEvents.ITEM_USE, new ItemUseEvent.Callback(player, player.level(), player.getItemInHand(interactionHand), interactionHand));
+
         if (callback.getActionResult() != InteractionResult.PASS)
             cir.setReturnValue(callback.getActionResult());
     }
@@ -35,6 +36,7 @@ public abstract class MixinMultiPlayerGameMode {
     @Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
     private void hookIntoBlockInteract(LocalPlayer player, InteractionHand interactionHand, BlockHitResult blockHitResult, CallbackInfoReturnable<InteractionResult> cir) {
         BlockInteractEvent.Callback callback = EventManager.callEvent(BaseEvents.BLOCK_INTERACT, new BlockInteractEvent.Callback(player, player.level(), player.getItemInHand(interactionHand), interactionHand, blockHitResult));
+
         if (callback.getActionResult() != InteractionResult.PASS)
             cir.setReturnValue(callback.getActionResult());
     }

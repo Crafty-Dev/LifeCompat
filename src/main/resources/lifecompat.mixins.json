@@ -14,7 +14,8 @@
     "world.item.MixinSolidBucketItem",
     "world.level.block.MixinBubbleColumnBlock",
     "world.level.block.MixinLiquidBlock",
-    "world.level.block.MixinSimpleWaterloggedBlock"
+    "world.level.block.MixinSimpleWaterloggedBlock",
+    "world.level.chunk.MixinLevelChunk"
   ],
   "injectors": {
     "defaultRequire": 1

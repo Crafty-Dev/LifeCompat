@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class SimpleEnergyCableBlockEntity extends AbstractEnergyContainer {
@@ -85,26 +86,26 @@ public abstract class SimpleEnergyCableBlockEntity extends AbstractEnergyContain
     }
 
 
-    protected void setCharged(boolean charged){
+    protected void setCharged(boolean charged) {
         this.charged = charged;
         this.setChanged();
     }
 
-    protected void resetUncharged(){
+    protected void resetUncharged() {
         this.ticksUncharged = 0;
         this.setChanged();
     }
 
-    protected void tickUncharged(){
+    protected void tickUncharged() {
         this.ticksUncharged++;
         this.setChanged();
     }
 
-    protected boolean isCharged(){
+    protected boolean isCharged() {
         return this.charged;
     }
 
-    protected int getTicksUncharged(){
+    protected int getTicksUncharged() {
         return this.ticksUncharged;
     }
 
@@ -116,7 +117,6 @@ public abstract class SimpleEnergyCableBlockEntity extends AbstractEnergyContain
         tag.putInt("ticksUncharged", this.ticksUncharged);
     }
 
-
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
@@ -125,22 +125,65 @@ public abstract class SimpleEnergyCableBlockEntity extends AbstractEnergyContain
         this.ticksUncharged = tag.getInt("ticksUncharged");
     }
 
-    public static void tick(Level level, BlockPos blockPos, BlockState blockState, SimpleEnergyCableBlockEntity blockEntity){
-        if(level.isClientSide())
+    private static int trackSystemEnergy(Level level, BlockPos pos) {
+
+        List<BlockPos> cablePositions = new ArrayList<>();
+        SimpleEnergyCableBlockEntity.trackCablePositions(level, pos, cablePositions);
+        int energy = 0;
+        for (BlockPos cablePos : cablePositions) {
+            SimpleEnergyCableBlockEntity cable = (SimpleEnergyCableBlockEntity) level.getBlockEntity(cablePos);
+            energy += cable.getStoredEnergy();
+        }
+
+        return energy;
+    }
+
+    private static void trackCablePositions(Level level, BlockPos pos, List<BlockPos> cablePositions) {
+        List<BlockPos> positions = new ArrayList<>();
+
+        for (Direction side : Direction.values()) {
+            if (level.getBlockEntity(pos.relative(side)) instanceof SimpleEnergyCableBlockEntity && !cablePositions.contains(pos.relative(side)))
+                positions.add(pos.relative(side));
+        }
+        cablePositions.addAll(positions);
+
+        for(BlockPos blockPos : positions){
+            trackCablePositions(level, blockPos, cablePositions);
+        }
+    }
+
+    private static boolean isSideConnected(Level level, BlockPos pos){
+        for(Direction side : Direction.values()){
+            if(BaseEnergyCable.getConnectionStateForNeighbor(level, pos, side) == BaseEnergyCable.ConnectionState.CONNECTED)
+                return true;
+        }
+
+        return false;
+    }
+
+
+    public static void tick(Level level, BlockPos blockPos, BlockState blockState, SimpleEnergyCableBlockEntity blockEntity) {
+        if (level.isClientSide())
             return;
 
-        if(blockEntity.isCharged() && blockEntity.getStoredEnergy() == 0)
+        if (blockEntity.isCharged() && blockEntity.getStoredEnergy() == 0)
             blockEntity.tickUncharged();
 
-        if(blockEntity.isCharged() && !blockState.getValue(BaseEnergyCable.ENERGY))
+        if (blockEntity.isCharged() && !blockState.getValue(BaseEnergyCable.ENERGY))
             level.setBlock(blockPos, blockState.setValue(BaseEnergyCable.ENERGY, true), Block.UPDATE_CLIENTS);
 
-        if(blockEntity.getTicksUncharged() >= 5){
+        if (blockEntity.getTicksUncharged() >= 6) {
             blockEntity.setCharged(false);
             blockEntity.resetUncharged();
-            level.setBlock(blockPos, blockState.setValue(BaseEnergyCable.ENERGY, false), Block.UPDATE_CLIENTS);
+        }
+
+
+        if (!blockEntity.isCharged() && blockState.getValue(BaseEnergyCable.ENERGY) && SimpleEnergyCableBlockEntity.isSideConnected(level, blockPos)) {
+            if (SimpleEnergyCableBlockEntity.trackSystemEnergy(level, blockPos) == 0)
+                level.setBlock(blockPos, blockState.setValue(BaseEnergyCable.ENERGY, false), Block.UPDATE_CLIENTS);
         }
 
         blockEntity.energyTick((ServerLevel) level, blockPos, blockState);
     }
+
 }

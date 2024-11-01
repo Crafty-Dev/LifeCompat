@@ -18,19 +18,10 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class AbstractEnergyContainer extends BlockEntity implements IEnergyProvider, IEnergyConsumer, IEnergyHolder {
 
     private final int energyCapacity;
     private int energy;
-    private final List<Direction> lastTransferredDirections = new ArrayList<>();
-
-    //Blocks the output to the specified when the block recently received energy from there
-    //Prevents infinite "push-pull" loops
-    //Lasts one tick
-    private final List<Direction> blockOutput = new ArrayList<>();
 
     public AbstractEnergyContainer(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState, int energyCapacity) {
         super(blockEntityType, blockPos, blockState);
@@ -62,44 +53,40 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
 
         int clampedInput = Math.min(energy, this.getMaxInput(level, pos, state));
 
+        int prevEnergy = this.energy;
+
         int updated = this.energy + clampedInput;
         this.energy = Math.min(updated, this.getCapacity(level, pos, state));
-        this.setChanged();
-        level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        if(!this.blockOutput.contains(from) && (level.getBlockEntity(pos.relative(from)) instanceof IEnergyHolder holder && holder.getStoredEnergy() >= this.getStoredEnergy()))
-            this.blockOutput.add(from);
+
+        if(this.energy != prevEnergy){
+            this.setChanged();
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            //Block last Input Side as output for the next 6 ticks (0-5), to prevent loops
+        }
 
         return (updated - this.energy) + (energy - clampedInput);
     }
 
-    protected void energyTick(ServerLevel level, BlockPos pos, BlockState state){
-        if(!this.isTransferring(level, pos, state))
+    protected void energyTick(ServerLevel level, BlockPos pos, BlockState state) {
+        if (!this.isTransferring(level, pos, state))
             return;
 
-        int transferable = Math.min(this.energy, this.getMaxOutput(level, pos, state));
-        if(transferable == 0)
-            return;
 
         boolean changed = false;
-        for(Direction outputSide : AbstractEnergyProvider.getSortedOutputs(this, level, pos, state, this.lastTransferredDirections)){
-            if(this.blockOutput.remove(outputSide))
-                continue;
-
+        for (Direction outputSide : this.getOutputDirections(level, pos, state)) {
+            int transferable = Math.min(this.energy, this.getMaxOutput(level, pos, state));
 
             BlockPos consumerPos = pos.relative(outputSide);
+
             int transferred = AbstractEnergyProvider.transferEnergy(level, consumerPos, level.getBlockState(consumerPos), transferable, outputSide.getOpposite());
             this.energy -= transferred;
-            if(transferred > 0){
-                this.lastTransferredDirections.add(outputSide);
-                changed = true;
-            }
-            if(transferred == transferable)
-                break;
 
-            transferable -= transferred;
+            if (transferred > 0 && !changed)
+                changed = true;
+
         }
 
-        if(changed){
+        if (changed) {
             this.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -127,4 +114,5 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
+
 }
