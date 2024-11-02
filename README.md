@@ -5,7 +5,7 @@ LifeCompat is a Compatibility Mod designed to simplify essential Modding Process
 The Library currently provides 3 APIs:
 - A pretty lightweight but strong **Event API**
 - An easy to use **Bucket API**
-- A mightly **Energy API**
+- A mighty **Energy API**
 
  You can find a detailed guide on the [wiki](https://github.com/Crafty-Dev/LifeCompat/wiki) page.
 
