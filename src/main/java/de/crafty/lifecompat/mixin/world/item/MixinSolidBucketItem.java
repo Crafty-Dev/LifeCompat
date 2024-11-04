@@ -1,6 +1,6 @@
 package de.crafty.lifecompat.mixin.world.item;
 
-import de.crafty.lifecompat.api.bucket.BucketCompatibility;
+import de.crafty.lifecompat.api.fluid.BucketCompatibility;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;

@@ -10,6 +10,7 @@
     "server.players.MixinPlayerList",
     "world.entity.MixinEntity",
     "world.entity.MixinPlayer",
+    "world.entity.item.MixinItemEntity",
     "world.item.MixinBucketItem",
     "world.item.MixinSolidBucketItem",
     "world.level.block.MixinBubbleColumnBlock",

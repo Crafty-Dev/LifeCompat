@@ -8,6 +8,7 @@ import de.crafty.lifecompat.events.blockentity.BlockEntityLoadEvent;
 import de.crafty.lifecompat.events.entity.EntityRemoveEvent;
 import de.crafty.lifecompat.events.game.GamePostInitEvent;
 import de.crafty.lifecompat.events.item.ItemDropEvent;
+import de.crafty.lifecompat.events.item.ItemTickEvent;
 import de.crafty.lifecompat.events.item.ItemUseEvent;
 import de.crafty.lifecompat.events.player.PlayerDeathEvent;
 import de.crafty.lifecompat.events.player.PlayerEnterLevelEvent;
@@ -29,6 +30,7 @@ public class BaseEvents {
     //Item
     public static final ItemUseEvent ITEM_USE = EventManager.registerEvent(new ItemUseEvent());
     public static final ItemDropEvent ITEM_DROP = EventManager.registerEvent(new ItemDropEvent());
+    public static final ItemTickEvent ITEM_TICK = EventManager.registerEvent(new ItemTickEvent());
 
     //Block
     public static final BlockChangeEvent BLOCK_CHANGE = EventManager.registerEvent(new BlockChangeEvent());

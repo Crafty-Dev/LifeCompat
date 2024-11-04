@@ -1,7 +1,7 @@
 package de.crafty.lifecompat.mixin.world.item;
 
-import de.crafty.lifecompat.api.bucket.BucketCompatibility;
-import de.crafty.lifecompat.api.bucket.IFluidProvider;
+import de.crafty.lifecompat.api.fluid.BucketCompatibility;
+import de.crafty.lifecompat.api.fluid.IFluidProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;

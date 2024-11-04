@@ -1,4 +1,4 @@
-package de.crafty.lifecompat.api.bucket;
+package de.crafty.lifecompat.api.fluid;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.LevelAccessor;

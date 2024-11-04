@@ -9,6 +9,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -17,6 +20,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,7 +84,6 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
 
     @Override
     public int receiveEnergy(ServerLevel serverLevel, BlockPos blockPos, BlockState blockState, Direction direction, int incoming) {
-        System.out.println("Receiving bameninghong");
         if (!this.isAccepting(serverLevel, blockPos, blockState))
             return incoming;
 
@@ -324,7 +327,6 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
     }
 
     public void validateNetwork() {
-        System.out.println("Validate mein Ar****");
         this.updateNetworkCables((ServerLevel) this.getLevel(), List.of());
     }
 
@@ -417,6 +419,18 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
     }
 
 
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider provider) {
+        CompoundTag tag = super.getUpdateTag(provider);
+        this.saveAdditional(tag, provider);
+        return tag;
+    }
+
+    @Override
+    public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
     public static void tick(Level level, BlockPos blockPos, BlockState blockState, AbstractEnergyCableBlockEntity cable) {
 
         if (level.isClientSide())
@@ -452,12 +466,14 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
         int devicesProvided = 0;
 
         for (DeviceData destData : cable.transferQueue) {
+            if(cable.getStoredEnergy() == 0)
+                break;;
+
             int transferred = AbstractEnergyProvider.transferEnergy((ServerLevel) level, destData.devicePos(), level.getBlockState(destData.devicePos()), Math.min(cable.getStoredEnergy(), cable.getMaxOutput((ServerLevel) level, blockPos, blockState)), destData.deviceSide());
             if (transferred > 0) {
-                devicesProvided++;
                 cable.setEnergy(cable.energy - transferred);
-            } else
-                break;
+            }
+            devicesProvided++;
         }
 
         for (int i = 0; i < devicesProvided; i++) {

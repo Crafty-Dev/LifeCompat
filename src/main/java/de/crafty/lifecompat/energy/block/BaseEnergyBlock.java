@@ -114,10 +114,9 @@ public abstract class BaseEnergyBlock extends BaseEntityBlock {
             if (state != null)
                 stack.update(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY, properties -> {
                     for (EnumProperty<IOMode> property : IO_MODE_PROPERTIES) {
-                        if (state.hasProperty(property)) {
+                        if (state.hasProperty(property))
                             properties = properties.with(property, state.getValue(property));
-                            System.out.println(property);
-                        }
+
                     }
                     return properties;
                 });

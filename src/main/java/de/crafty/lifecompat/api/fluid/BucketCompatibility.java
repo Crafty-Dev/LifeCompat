@@ -1,4 +1,4 @@
-package de.crafty.lifecompat.api.bucket;
+package de.crafty.lifecompat.api.fluid;
 
 import de.crafty.lifecompat.LifeCompat;
 import net.minecraft.core.BlockPos;
@@ -6,6 +6,8 @@ import net.minecraft.core.cauldron.CauldronInteraction;
 import net.minecraft.core.dispenser.BlockSource;
 import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
 import net.minecraft.core.dispenser.DispenseItemBehavior;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -32,7 +34,7 @@ import java.util.function.Predicate;
  */
 public class BucketCompatibility {
 
-    private static final LinkedHashMap<ResourceLocation, BucketGroup> BUCKET_GROUPS = new LinkedHashMap<>();
+    protected static final LinkedHashMap<ResourceLocation, BucketGroup> BUCKET_GROUPS = new LinkedHashMap<>();
     private static final LinkedHashMap<ResourceLocation, List<Item>> ADDITIONAL_BUCKETS = new LinkedHashMap<>();
 
     //---------- API Methods ----------
@@ -83,8 +85,8 @@ public class BucketCompatibility {
         return new ItemStack(Items.BUCKET);
     }
 
-    private static boolean isVanillaBucket(Item item) {
-        return item == Items.BUCKET || item == Items.WATER_BUCKET || item == Items.LAVA_BUCKET || item == Items.POWDER_SNOW_BUCKET;
+    protected static boolean isVanillaBucket(Item item) {
+        return BuiltInRegistries.ITEM.getKey(item).getNamespace().equals("minecraft");
     }
 
     private static BucketGroup createBucketGroup(Item... buckets) {
@@ -105,7 +107,7 @@ public class BucketCompatibility {
 
 
     //---------- BucketGroup Representation ----------
-    static class BucketGroup {
+    protected static class BucketGroup {
 
         private final HashMap<Fluid, BucketItem> fluidCompat;
         private final HashMap<Block, SolidBucketItem> solidCompat;
@@ -119,7 +121,7 @@ public class BucketCompatibility {
             return this.fluidCompat.values().stream().toList();
         }
 
-        private HashMap<Fluid, BucketItem> getFluidCompat() {
+        protected HashMap<Fluid, BucketItem> getFluidCompat() {
             return this.fluidCompat;
         }
 
@@ -127,15 +129,15 @@ public class BucketCompatibility {
             return this.solidCompat;
         }
 
-        private ItemStack getFilledBucket(Fluid fluid) {
+        protected ItemStack getFilledBucket(Fluid fluid) {
             return this.fluidCompat.containsKey(fluid) ? new ItemStack(this.fluidCompat.get(fluid)) : ItemStack.EMPTY;
         }
 
-        private ItemStack getFilledBucket(Block block) {
+        protected ItemStack getFilledBucket(Block block) {
             return this.solidCompat.containsKey(block) ? new ItemStack(this.solidCompat.get(block)) : ItemStack.EMPTY;
         }
 
-        private ItemStack getEmptyBucket() {
+        protected ItemStack getEmptyBucket() {
             return this.fluidCompat.containsKey(Fluids.EMPTY) ? new ItemStack(this.fluidCompat.get(Fluids.EMPTY)) : ItemStack.EMPTY;
         }
 
@@ -145,9 +147,10 @@ public class BucketCompatibility {
 
         //Merges 2 BucketGroups together
         //Used for additional buckets
-        private void merge(BucketGroup otherGroup) {
+        private BucketGroup merge(BucketGroup otherGroup) {
             this.fluidCompat.putAll(otherGroup.fluidCompat);
             this.solidCompat.putAll(otherGroup.solidCompat);
+            return this;
         }
 
     }
@@ -157,50 +160,25 @@ public class BucketCompatibility {
     public static void bootstrap() {
         BUCKET_GROUPS.forEach((id, bucketGroup) -> {
             if (ADDITIONAL_BUCKETS.containsKey(id))
-                bucketGroup.merge(createBucketGroup(ADDITIONAL_BUCKETS.get(id).toArray(Item[]::new)));
+                BUCKET_GROUPS.put(id, bucketGroup.merge(createBucketGroup(ADDITIONAL_BUCKETS.get(id).toArray(Item[]::new))));
 
+            //Logging Only
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < bucketGroup.getBuckets().size(); i++) {
                 builder.append(bucketGroup.getBuckets().get(i).builtInRegistryHolder().getRegisteredName());
                 if (i < bucketGroup.getBuckets().size() - 1) builder.append(", ");
             }
             LifeCompat.LOGGER.info("Bucket Group {}:{} present; containing: {}", id.getNamespace(), id.getPath(), builder);
+            //Logging Only end
 
             bucketGroup.getFluidCompat().forEach((fluid, bucketItem) -> {
                 if (isVanillaBucket(bucketItem)) return;
 
-                if (!fluid.equals(Fluids.EMPTY)) {
+                if (!fluid.equals(Fluids.EMPTY))
                     DispenserBlock.registerBehavior(bucketItem, BucketCompatibility.getEmptyBehaviour(bucketGroup));
-
-                    if (fluid.isSame(Fluids.WATER)) BucketCompatibility.registerCauldronWater(bucketItem);
-                    if (fluid.isSame(Fluids.LAVA)) BucketCompatibility.registerCauldronLava(bucketItem);
-
-                } else {
+                else
                     DispenserBlock.registerBehavior(bucketItem, BucketCompatibility.getFillBehaviour(bucketGroup));
-                    if (bucketGroup.getFilledBucket(Fluids.WATER) != ItemStack.EMPTY)
-                        CauldronInteraction.WATER.map().put(bucketItem, (blockState, level, blockPos, player, interactionHand, itemStack) ->
-                                fillBucket(blockState, level, blockPos, player, interactionHand, itemStack,
-                                        bucketGroup.getFilledBucket(Fluids.WATER),
-                                        blockStatex -> blockStatex.getValue(LayeredCauldronBlock.LEVEL) == 3,
-                                        SoundEvents.BUCKET_FILL
-                                ));
-                    if (bucketGroup.getFilledBucket(Fluids.LAVA) != ItemStack.EMPTY) {
-                        CauldronInteraction.LAVA.map().put(bucketItem, (blockState, level, blockPos, player, interactionHand, itemStack) ->
-                                fillBucket(
-                                        blockState, level, blockPos, player, interactionHand, itemStack,
-                                        bucketGroup.getFilledBucket(Fluids.LAVA),
-                                        blockStatex -> true,
-                                        SoundEvents.BUCKET_FILL_LAVA
-                                ));
-                    }
-                    if (bucketGroup.getFilledBucket(Blocks.POWDER_SNOW) != ItemStack.EMPTY)
-                        CauldronInteraction.POWDER_SNOW.map().put(bucketItem, (blockState, level, blockPos, player, interactionHand, itemStack) ->
-                                fillBucket(blockState, level, blockPos, player, interactionHand, itemStack,
-                                        bucketGroup.getFilledBucket(Blocks.POWDER_SNOW),
-                                        blockStatex -> blockStatex.getValue(LayeredCauldronBlock.LEVEL) == 3,
-                                        SoundEvents.BUCKET_FILL_POWDER_SNOW
-                                ));
-                }
+
 
             });
             bucketGroup.getSolidCompat().forEach((block, solidBucketItem) -> {
