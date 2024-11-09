@@ -6,6 +6,8 @@ import de.crafty.lifecompat.api.event.EventManager;
 import de.crafty.lifecompat.api.fluid.FluidCompatibility;
 import de.crafty.lifecompat.events.BaseEvents;
 import de.crafty.lifecompat.events.game.GamePostInitEvent;
+import de.crafty.lifecompat.network.LifeCompatNetworkManager;
+import de.crafty.lifecompat.network.LifeCompatNetworkServer;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -34,6 +36,9 @@ public class LifeCompat implements ModInitializer {
 		//TODO Entity Buckets?
 
 		EventManager.registerListener(BaseEvents.GAME_POST_INIT, new PostInitListener());
+
+		LifeCompatNetworkManager.registerNetworkPackets();
+		LifeCompatNetworkServer.registerServerReceivers();
 	}
 
 

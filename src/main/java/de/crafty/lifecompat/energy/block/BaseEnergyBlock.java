@@ -57,8 +57,34 @@ public abstract class BaseEnergyBlock extends BaseEntityBlock {
     //A map of all facings with their associated relative sides
     private static final HashMap<Direction, List<Direction>> RELATIVE_DIRECTIONS = BaseEnergyBlock.preGenerateRelativeDirections();
 
-    protected BaseEnergyBlock(Properties properties) {
+
+    private final boolean showEnergyTooltip;
+    private final Type energyBlockType;
+    private final int capacity;
+
+    protected BaseEnergyBlock(Properties properties, Type energyBlockType, int capacity) {
+        this(properties, true, energyBlockType, capacity);
+    }
+
+    protected BaseEnergyBlock(Properties properties, boolean showEnergyTooltip, Type energyBlockType, int capacity) {
         super(properties);
+
+        this.showEnergyTooltip = showEnergyTooltip;
+        this.energyBlockType = energyBlockType;
+        this.capacity = capacity;
+    }
+
+
+    public int getCapacity() {
+        return this.capacity;
+    }
+
+    public Type getEnergyBlockType() {
+        return this.energyBlockType;
+    }
+
+    public boolean showEnergyTooltip() {
+        return this.showEnergyTooltip;
     }
 
     public List<IOMode> validIOModes() {
@@ -222,6 +248,9 @@ public abstract class BaseEnergyBlock extends BaseEntityBlock {
 
     @Override
     public void appendHoverText(ItemStack itemStack, Item.TooltipContext tooltipContext, List<Component> list, TooltipFlag tooltipFlag) {
+        if(!this.showEnergyTooltip())
+            return;
+
         CustomData data = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
         CompoundTag tag = data == null ? new CompoundTag() : data.copyTag();
 
@@ -230,7 +259,19 @@ public abstract class BaseEnergyBlock extends BaseEntityBlock {
         if (tag.contains("energy"))
             energy = tag.getInt("energy");
 
-        if (energy > 0)
-            list.add(Component.translatable("energy.lifecompat.stored").append(": ").withStyle(ChatFormatting.GRAY).append(Component.literal(EnergyUnitConverter.format(energy)).withStyle(ChatFormatting.DARK_PURPLE)));
+
+        list.add(Component.translatable("energy.lifecompat.stored." + this.getEnergyBlockType().name().toLowerCase())
+                .append(": ")
+                .append(Component.literal(EnergyUnitConverter.formatRaw(energy)))
+                .append("/").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(EnergyUnitConverter.format(this.getCapacity())).withStyle(ChatFormatting.RED))
+        );
+    }
+
+
+    public enum Type {
+        CONSUMER,
+        PROVIDER,
+        CONTAINER
     }
 }

@@ -23,7 +23,7 @@ import java.util.List;
 public abstract class AbstractEnergyProvider extends BlockEntity implements IEnergyProvider, IEnergyHolder {
 
 
-    private final int energyCacheSize;
+    private int energyCacheSize;
     private int energy;
     private final List<Direction> lastTransferredDirections = new ArrayList<>();
 
@@ -34,7 +34,7 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
     }
 
     @Override
-    public int getCapacity(ServerLevel level, BlockPos pos, BlockState state) {
+    public int getCapacity() {
         return this.energyCacheSize;
     }
 
@@ -45,7 +45,7 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
 
     protected void energyTick(ServerLevel level, BlockPos pos, BlockState state){
         if(this.isGenerating(level, pos, state)){
-            this.energy = Math.min(this.energy + this.getGenerationPerTick(level, pos, state), this.getCapacity(level, pos, state));
+            this.energy = Math.min(this.energy + this.getGenerationPerTick(level, pos, state), this.getCapacity());
             this.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -109,11 +109,13 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         tag.putInt("energy", this.energy);
+        tag.putInt("capacity", this.energyCacheSize);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         this.energy = tag.getInt("energy");
+        this.energyCacheSize = tag.getInt("capacity");
     }
 
     @Override

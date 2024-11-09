@@ -29,7 +29,7 @@ import java.util.List;
 public abstract class AbstractEnergyCableBlockEntity extends BlockEntity implements IEnergyConsumer, IEnergyHolder, IEnergyProvider {
 
 
-    private final int energyCapacity;
+    private int energyCapacity;
     private int energy;
 
     private HashMap<Direction, Boolean> attachedChunkData = new HashMap<>();
@@ -57,7 +57,7 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
     }
 
     @Override
-    public int getCapacity(ServerLevel serverLevel, BlockPos blockPos, BlockState blockState) {
+    public int getCapacity() {
         return this.energyCapacity;
     }
 
@@ -90,7 +90,7 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
         int clampedInput = Math.min(incoming, this.getMaxInput(serverLevel, blockPos, blockState));
         int updated = this.energy + clampedInput;
 
-        this.setEnergy(Math.min(updated, this.getCapacity(serverLevel, blockPos, blockState)));
+        this.setEnergy(Math.min(updated, this.getCapacity()));
         return (updated - this.energy) + (incoming - clampedInput);
     }
 
@@ -385,6 +385,7 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
         super.saveAdditional(tag, provider);
 
         tag.putInt("energy", this.energy);
+        tag.putInt("capacity", this.energyCapacity);
         tag.putInt("ticksUncharged", this.ticksUncharged);
 
         tag.putBoolean("bufferUnlocked", this.bufferUnlocked);
@@ -404,6 +405,7 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
         super.loadAdditional(tag, provider);
 
         this.energy = tag.getInt("energy");
+        this.energyCapacity = tag.getInt("capacity");
         this.ticksUncharged = tag.getInt("ticksUncharged");
 
         this.bufferUnlocked = tag.getBoolean("bufferUnlocked");

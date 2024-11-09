@@ -1,5 +1,7 @@
 {
-  "energy.lifecompat.stored": "Stored Energy",
+  "energy.lifecompat.stored.container": "Stored Energy",
+  "energy.lifecompat.stored.consumer": "Buffer",
+  "energy.lifecompat.stored.provider": "Buffer",
   "energy.lifecompat.io.front": "Front",
   "energy.lifecompat.io.left": "Left",
   "energy.lifecompat.io.back": "Back",

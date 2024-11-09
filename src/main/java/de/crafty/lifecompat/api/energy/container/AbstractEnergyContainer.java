@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractEnergyContainer extends BlockEntity implements IEnergyProvider, IEnergyConsumer, IEnergyHolder {
 
-    private final int energyCapacity;
+    private int energyCapacity;
     private int energy;
 
     public AbstractEnergyContainer(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState, int energyCapacity) {
@@ -31,13 +31,12 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
 
     //Returns the energy capacity depending on the block itself
     //Maybe usefull for upgrades, etc...
-    @Override
-    public int getCapacity(ServerLevel level, BlockPos pos, BlockState state) {
-        return this.energyCapacity;
-    }
 
     //Returns the standard energy capacity
-    public int getStandardEnergyCapacity() {
+
+
+    @Override
+    public int getCapacity() {
         return this.energyCapacity;
     }
 
@@ -56,7 +55,7 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
         int prevEnergy = this.energy;
 
         int updated = this.energy + clampedInput;
-        this.energy = Math.min(updated, this.getCapacity(level, pos, state));
+        this.energy = Math.min(updated, this.getCapacity());
 
         if(this.energy != prevEnergy){
             this.setChanged();
@@ -95,11 +94,13 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         tag.putInt("energy", this.energy);
+        tag.putInt("capacity", this.energyCapacity);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         this.energy = tag.getInt("energy");
+        this.energyCapacity = tag.getInt("capacity");
     }
 
     @Override

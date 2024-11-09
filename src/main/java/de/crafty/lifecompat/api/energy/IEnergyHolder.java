@@ -7,7 +7,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public interface IEnergyHolder {
 
     //Should return the maximun capacity of this block
-    int getCapacity(ServerLevel level, BlockPos pos, BlockState state);
+    int getCapacity();
 
     //Should return the current energy amount this block contains
     int getStoredEnergy();

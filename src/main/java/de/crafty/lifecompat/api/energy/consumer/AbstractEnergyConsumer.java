@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractEnergyConsumer extends BlockEntity implements IEnergyConsumer, IEnergyHolder {
 
-    private final int energyCacheSize;
+    private int energyCacheSize;
     private int energy;
 
     public AbstractEnergyConsumer(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState, int energyCacheSize) {
@@ -28,7 +28,7 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
     }
 
     @Override
-    public int getCapacity(ServerLevel level, BlockPos pos, BlockState state) {
+    public int getCapacity() {
         return this.energyCacheSize;
     }
 
@@ -45,7 +45,7 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
         int clampedInput = Math.min(energy, this.getMaxInput(level, pos, state));
 
         int updated = this.energy + clampedInput;
-        this.energy = Math.min(updated, this.getCapacity(level, pos, state));
+        this.energy = Math.min(updated, this.getCapacity());
         this.setChanged();
         level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
 
@@ -71,11 +71,14 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         tag.putInt("energy", this.energy);
+        tag.putInt("capacity", this.energyCacheSize);
     }
 
     @Override
     protected void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
         this.energy = compoundTag.getInt("energy");
+        this.energyCacheSize = compoundTag.getInt("capacity");
+
     }
 
     @Override

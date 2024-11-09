@@ -4,9 +4,7 @@ import de.crafty.lifecompat.LifeCompat;
 import net.minecraft.core.cauldron.CauldronInteraction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.item.BucketItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.SolidBucketItem;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.AbstractCauldronBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -91,6 +89,11 @@ public class FluidCompatibility {
     }
 
     public static void bootstrap() {
+
+        CAULDRON_SUPPORT.forEach((fluid, cauldronInfo) -> {
+            if(!FluidCompatibility.isVanillaFluid(fluid))
+                Item.BY_BLOCK.put(cauldronInfo.cauldron(), Items.CAULDRON);
+        });
 
         CAULDRON_INTERACTION_MAPS.put(Fluids.LAVA, CauldronInteraction.LAVA);
         CAULDRON_INTERACTION_MAPS.put(Fluids.WATER, CauldronInteraction.WATER);
