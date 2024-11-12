@@ -26,7 +26,7 @@ public class EnergyUnitConverter {
         if(energy / 1000000.0F >= 1)
             return String.format("%.1fm", energy / 1000000.0F);
         if(energy / 1000F >= 1)
-            return String.format("%.1fk", energy / 1000F);
+            return String.format("%.1fk", energy / 1000.0F);
 
         return String.valueOf(energy);
     }

@@ -67,7 +67,6 @@ public abstract class AbstractEnergyContainerScreen<T extends AbstractPositioned
 
     protected void renderHorizontalEnergyBar(GuiGraphics guiGraphics, int x, int y, float partialTicks) {
         float scale = 0.75F;
-        //System.out.println(this.getFillStatus());
 
         float barX = this.width / 2.0F - (152 * scale) / 2;
         float barY = y - (18 * scale) - 2;
@@ -77,7 +76,7 @@ public abstract class AbstractEnergyContainerScreen<T extends AbstractPositioned
         poseStack.translate(barX, barY, 0);
         poseStack.scale(scale, scale, 1.0F);
         guiGraphics.blit(ENERGY_BAR, 0, 0, 0, 0, 152, 18);
-        guiGraphics.blit(ENERGY_BAR, 0, 0, 0, 18 + (this.energyBarTick / 4) * 18, 2 + ((int) (148 * this.getFillStatus())), 18);
+        guiGraphics.blit(ENERGY_BAR, 0, 0, 0, 18 + (this.energyBarTick / 4) * 18, 2 + Math.round(148 * this.getFillStatus()), 18);
         poseStack.popPose();
 
         //Info Rndering
@@ -97,7 +96,6 @@ public abstract class AbstractEnergyContainerScreen<T extends AbstractPositioned
 
         float fontScale = 0.5F;
 
-        //TODO Change formatting to show smaller number
         Component energy = Component.literal(EnergyUnitConverter.formatRaw(this.getCurrentEnergy())).withStyle(ChatFormatting.GRAY)
                 .append("/")
                 .append(Component.literal(EnergyUnitConverter.format(this.getEnergyCapacity())).withStyle(ChatFormatting.RED));

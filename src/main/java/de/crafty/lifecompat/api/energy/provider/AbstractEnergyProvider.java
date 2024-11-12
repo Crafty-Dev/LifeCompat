@@ -3,6 +3,7 @@ package de.crafty.lifecompat.api.energy.provider;
 import de.crafty.lifecompat.api.energy.IEnergyConsumer;
 import de.crafty.lifecompat.api.energy.IEnergyHolder;
 import de.crafty.lifecompat.api.energy.IEnergyProvider;
+import de.crafty.lifecompat.energy.block.BaseEnergyBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -15,6 +16,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,36 +46,50 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
         return this.energy;
     }
 
-    protected void energyTick(ServerLevel level, BlockPos pos, BlockState state){
-        if(this.isGenerating(level, pos, state)){
+    @Override
+    public List<Direction> getOutputDirections(ServerLevel level, BlockPos pos, BlockState state) {
+        List<Direction> directions = new ArrayList<>();
+
+        for (Direction side : Direction.values()) {
+            DirectionProperty facingProp = state.hasProperty(BaseEnergyBlock.FACING) ? BaseEnergyBlock.FACING : state.hasProperty(BaseEnergyBlock.HORIZONTAL_FACING) ? BaseEnergyBlock.HORIZONTAL_FACING : null;
+            EnumProperty<BaseEnergyBlock.IOMode> sideMode = BaseEnergyBlock.calculateIOSide(facingProp != null ? state.getValue(facingProp) : Direction.NORTH, side);
+            if (state.hasProperty(sideMode) && state.getValue(sideMode).isOutput())
+                directions.add(side);
+        }
+
+        return directions;
+    }
+
+    protected void energyTick(ServerLevel level, BlockPos pos, BlockState state) {
+        if (this.isGenerating(level, pos, state)) {
             this.energy = Math.min(this.energy + this.getGenerationPerTick(level, pos, state), this.getCapacity());
             this.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
 
-        if(!this.isTransferring(level, pos, state))
+        if (!this.isTransferring(level, pos, state))
             return;
 
         int transferable = Math.min(this.energy, this.getMaxOutput(level, pos, state));
-        if(transferable == 0)
+        if (transferable == 0)
             return;
 
         boolean changed = false;
-        for(Direction outputSide : AbstractEnergyProvider.getSortedOutputs(this, level, pos, state, this.lastTransferredDirections)){
+        for (Direction outputSide : AbstractEnergyProvider.getSortedOutputs(this, level, pos, state, this.lastTransferredDirections)) {
             BlockPos consumerPos = pos.relative(outputSide);
             int transferred = AbstractEnergyProvider.transferEnergy(level, consumerPos, level.getBlockState(consumerPos), transferable, outputSide.getOpposite());
             this.energy -= transferred;
-            if(transferred > 0){
+            if (transferred > 0) {
                 this.lastTransferredDirections.add(outputSide);
                 changed = true;
             }
-            if(transferred == transferable)
+            if (transferred == transferable)
                 break;
 
             transferable -= transferred;
         }
 
-        if(changed){
+        if (changed) {
             this.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -80,19 +97,18 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
 
 
     /**
-     *
-     * @param level The World
-     * @param pos The consumer pos
-     * @param state The consumer state
+     * @param level  The World
+     * @param pos    The consumer pos
+     * @param state  The consumer state
      * @param energy The provided energy
-     * @param side The side of the consumer
+     * @param side   The side of the consumer
      * @return The amount transferred to the consumer
      */
     public static int transferEnergy(ServerLevel level, BlockPos pos, BlockState state, int energy, Direction side) {
-        if(!(level.getBlockEntity(pos) instanceof IEnergyConsumer consumer))
+        if (!(level.getBlockEntity(pos) instanceof IEnergyConsumer consumer))
             return 0;
 
-        if(!consumer.getInputDirections(level, pos, state).contains(side) || !consumer.isAccepting(level, pos, state))
+        if (!consumer.getInputDirections(level, pos, state).contains(side) || !consumer.isAccepting(level, pos, state))
             return 0;
 
         return energy - consumer.receiveEnergy(level, pos, state, side, energy);

@@ -52,7 +52,7 @@ public class BucketCompatibility {
     public static void addBucketsToGroup(ResourceLocation groupId, Item... buckets) {
         if (ADDITIONAL_BUCKETS.containsKey(groupId)) Collections.addAll(ADDITIONAL_BUCKETS.get(groupId), buckets);
 
-        if (!ADDITIONAL_BUCKETS.containsKey(groupId)) ADDITIONAL_BUCKETS.put(groupId, Arrays.stream(buckets).toList());
+        if (!ADDITIONAL_BUCKETS.containsKey(groupId)) ADDITIONAL_BUCKETS.put(groupId, Arrays.asList(buckets));
 
     }
 
