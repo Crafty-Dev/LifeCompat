@@ -11,6 +11,8 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -39,10 +41,19 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
     }
 
     @Override
+    public void setCapacity(int capacity) {
+        this.energyCacheSize = capacity;
+    }
+
+    @Override
     public int getStoredEnergy() {
         return this.energy;
     }
 
+    @Override
+    public void setStoredEnergy(int energy) {
+        this.energy = energy;
+    }
 
     @Override
     public List<Direction> getInputDirections(ServerLevel world, BlockPos pos, BlockState state) {

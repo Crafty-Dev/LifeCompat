@@ -2,8 +2,7 @@ package de.crafty.lifecompat.energy.screen;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import de.crafty.lifecompat.LifeCompat;
-import de.crafty.lifecompat.api.energy.IEnergyHolder;
-import de.crafty.lifecompat.energy.menu.AbstractPositionedMenu;
+import de.crafty.lifecompat.energy.menu.AbstractEnergyContainerMenu;
 import de.crafty.lifecompat.util.EnergyUnitConverter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -11,8 +10,9 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 
-public abstract class AbstractEnergyContainerScreen<T extends AbstractPositionedMenu> extends AbstractContainerScreen<T> {
+public abstract class AbstractEnergyContainerScreen<T extends AbstractEnergyContainerMenu> extends AbstractContainerScreen<T> {
 
     private static final ResourceLocation ENERGY_BAR = ResourceLocation.fromNamespaceAndPath(LifeCompat.MODID, "textures/gui/container/energy_bar_horizontal.png");
 
@@ -42,13 +42,8 @@ public abstract class AbstractEnergyContainerScreen<T extends AbstractPositioned
         if (this.energyBarTick >= 31)
             this.energyBarTickUp = false;
 
-        if(this.getMenu().getMenuPos() == null || this.minecraft == null || this.minecraft.level == null)
-            return;
-
-        if(this.minecraft.level.getBlockEntity(this.getMenu().getMenuPos()) instanceof IEnergyHolder energyHolder){
-            this.currentEnergy = energyHolder.getStoredEnergy();
-            this.energyCapacity = energyHolder.getCapacity();
-        }
+        this.currentEnergy = this.getMenu().getStoredEnergy();
+        this.energyCapacity = this.getMenu().getCapacity();
 
         this.fillStatus = (float) this.currentEnergy / (float) this.energyCapacity;
     }

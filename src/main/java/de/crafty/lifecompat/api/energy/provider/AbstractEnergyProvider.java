@@ -42,8 +42,18 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
     }
 
     @Override
+    public void setCapacity(int capacity) {
+        this.energyCacheSize = capacity;
+    }
+
+    @Override
     public int getStoredEnergy() {
         return this.energy;
+    }
+
+    @Override
+    public void setStoredEnergy(int energy) {
+        this.energy = energy;
     }
 
     @Override

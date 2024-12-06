@@ -62,8 +62,18 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
     }
 
     @Override
+    public void setCapacity(int capacity) {
+        this.energyCapacity = capacity;
+    }
+
+    @Override
     public int getStoredEnergy() {
         return this.energy;
+    }
+
+    @Override
+    public void setStoredEnergy(int energy) {
+        this.energy = energy;
     }
 
     @Override
@@ -201,7 +211,6 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
 
             if (level.getBlockEntity(pos) instanceof AbstractEnergyCableBlockEntity cable) {
 
-                //TODO && no cable through unloaded chunk
                 if (!cable.isNetworkActive(level, cableList) && state.getBlock() instanceof BaseEnergyCable && state.getValue(BaseEnergyCable.ENERGY))
                     level.setBlock(pos, state.setValue(BaseEnergyCable.ENERGY, false), Block.UPDATE_CLIENTS);
             }
@@ -318,8 +327,9 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
         this.transferQueue.removeAll(removedConsumers);
         this.transferQueue.removeAll(removedContainers);
 
-        this.transferQueue.addAll(newConsumers);
-        this.transferQueue.addAll(newContainers);
+        //Prioritize new devices once
+        this.transferQueue.addAll(0, newContainers);
+        this.transferQueue.addAll(0, newConsumers);
 
 
         this.connectedProviders = providers;

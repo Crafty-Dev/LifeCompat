@@ -41,8 +41,18 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
     }
 
     @Override
+    public void setCapacity(int capacity) {
+        this.energyCapacity = capacity;
+    }
+
+    @Override
     public int getStoredEnergy() {
         return this.energy;
+    }
+
+    @Override
+    public void setStoredEnergy(int energy) {
+        this.energy = energy;
     }
 
     @Override

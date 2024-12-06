@@ -33,7 +33,6 @@ public class LifeCompat implements ModInitializer {
 
 		FluidCompatibility.addCauldronSupport(Blocks.POWDER_SNOW, Blocks.POWDER_SNOW_CAULDRON, SoundEvents.BUCKET_FILL_POWDER_SNOW, SoundEvents.BUCKET_EMPTY_POWDER_SNOW);
 
-		//TODO Entity Buckets?
 
 		EventManager.registerListener(BaseEvents.GAME_POST_INIT, new PostInitListener());
 
