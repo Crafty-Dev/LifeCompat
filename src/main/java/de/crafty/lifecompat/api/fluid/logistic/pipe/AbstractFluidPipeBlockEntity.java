@@ -42,7 +42,9 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
 
     private List<FluidContainerTarget> fluidInsertionQueue = new ArrayList<>();
 
+    private boolean initialized;
     private long lastTick;
+    private int emptyTick;
 
     public AbstractFluidPipeBlockEntity(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState, int initialBufferCapacity) {
         super(blockEntityType, blockPos, blockState);
@@ -51,7 +53,9 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         this.buffer = 0;
         this.bufferCapacity = initialBufferCapacity;
 
+        this.initialized = false;
         this.lastTick = 0;
+        this.emptyTick = -1;
     }
 
 
@@ -80,6 +84,16 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
 
     }
 
+    private void initTransferModes() {
+        BlockState state = this.getBlockState();
+
+       for(Direction side : Direction.values()){
+           this.transferModes.put(side, TransferMode.EXTRACTING);
+       }
+
+        this.setChanged();
+    }
+
     private void setBufferCapacity(int bufferCapacity) {
         this.bufferCapacity = bufferCapacity;
         this.setChanged();
@@ -103,6 +117,9 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
     }
 
     public void setFluid(Fluid fluid) {
+        if (fluid == this.getBufferedFluid())
+            return;
+
         this.fluid = fluid;
         this.level.gameEvent(GameEvent.BLOCK_CHANGE, this.getBlockPos(), GameEvent.Context.of(this.getBlockState()));
         this.setChanged();
@@ -114,22 +131,28 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
     }
 
     public TransferMode getTransferMode(Direction direction) {
-        return this.transferModes.get(direction);
+        return this.transferModes.getOrDefault(direction, TransferMode.NONE);
     }
 
     public void setTransferMode(Direction direction, TransferMode mode) {
         this.transferModes.put(direction, mode);
+        this.level.gameEvent(GameEvent.BLOCK_CHANGE, this.getBlockPos(), GameEvent.Context.of(this.getBlockState()));
         this.setChanged();
+        this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), Block.UPDATE_ALL);
     }
 
 
     public void onPlace() {
+        this.initialized = true;
+
         this.initChunkCache();
+        this.initTransferModes();
         this.updatePipe((ServerLevel) this.getLevel(), List.of());
     }
 
     public void onDestroyed() {
-        this.updatePipe((ServerLevel) this.getLevel(), List.of(this.getBlockPos()));
+        if (this.initialized)
+            this.updatePipe((ServerLevel) this.getLevel(), List.of(this.getBlockPos()));
     }
 
     public void validateNetwork() {
@@ -138,8 +161,14 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
 
     public void fluidTick(ServerLevel level, BlockPos pos, BlockState state) {
 
+        if (!this.initialized)
+            return;
+
         //Extraction
         for (Direction side : Direction.values()) {
+            if(BaseFluidPipeBlock.getConnectionStateForNeighbor(level, pos, side) != BaseFluidPipeBlock.ConnectionState.ATTACHED)
+                continue;
+
             if (this.getTransferMode(side).isExtracting()) {
                 BlockPos relative = pos.relative(side);
                 BlockState fluidContainerState = level.getBlockState(relative);
@@ -157,6 +186,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
                     if (this.fluid == Fluids.EMPTY) {
                         this.setFluid(containerFluid);
                         this.setBuffer(extracted);
+                        this.validateNetwork();
                     } else
                         this.setBuffer(this.getBuffer() + extracted);
 
@@ -172,14 +202,18 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         //Insertion
         for (FluidContainerTarget target : this.fluidInsertionQueue) {
 
+            if (this.getBuffer() <= 0)
+                break;
+
             if (level.getBlockEntity(target.pos()) instanceof IFluidContainer fluidContainer) {
                 int transferred = fluidContainer.fillWithLiquid(level, target.pos(), level.getBlockState(target.pos()), this.fluid, Math.min(this.getBuffer(), this.getInsertionRate()));
                 if (transferred == 0)
                     continue;
 
                 this.setBuffer(this.getBuffer() - transferred);
-                if (this.getBuffer() == 0)
-                    this.setFluid(Fluids.EMPTY);
+                if (this.getBuffer() <= 0)
+                    this.emptyTick = 0;
+
 
                 targetAmount++;
             }
@@ -189,8 +223,10 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
             this.fluidInsertionQueue.add(this.fluidInsertionQueue.removeFirst());
         }
 
+        this.setChanged();
 
     }
+
 
     private boolean chunkDataChangedToUnloaded(ServerLevel level) {
         if (this.currentChunkStates.isEmpty())
@@ -215,16 +251,34 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         if (level.isClientSide())
             return;
 
+        boolean changed = false;
+
         if (blockEntity.lastTick < level.getGameTime() - 1)
             blockEntity.updatePipe((ServerLevel) level, List.of());
         else {
             blockEntity.lastTick = level.getGameTime();
-            blockEntity.setChanged();
+            changed = true;
         }
 
         if (blockEntity.chunkDataChangedToUnloaded((ServerLevel) level))
             blockEntity.updatePipe((ServerLevel) level, List.of());
 
+        if (blockEntity.emptyTick >= 0) {
+            if (blockEntity.getBuffer() > 0) {
+                blockEntity.emptyTick = -1;
+            } else {
+                blockEntity.emptyTick++;
+            }
+            changed = true;
+
+            if (blockEntity.emptyTick >= 5) {
+                blockEntity.emptyTick = -1;
+                blockEntity.validateNetwork();
+            }
+        }
+
+        if (changed)
+            blockEntity.setChanged();
 
         blockEntity.fluidTick((ServerLevel) level, pos, state);
     }
@@ -232,14 +286,17 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
     private void updatePipe(ServerLevel level, List<BlockPos> excludedPositions) {
         List<BlockPos> pipes = new ArrayList<>();
         this.trackPipes(level, this.getBlockPos(), pipes, excludedPositions);
+
         if (!pipes.contains(this.getBlockPos()) && !excludedPositions.contains(this.getBlockPos()))
             pipes.add(this.getBlockPos());
 
         List<FluidContainerTarget> extractionTargets = new ArrayList<>();
         List<FluidContainerTarget> insertionTargets = new ArrayList<>();
 
-        pipes.forEach(pipePos -> {
 
+        Fluid currentFluid = Fluids.EMPTY;
+
+        for (BlockPos pipePos : pipes) {
             for (Direction side : Direction.values()) {
                 BlockPos relative = pipePos.relative(side);
                 BlockState state = level.getBlockState(relative);
@@ -249,12 +306,16 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
                 if (state.getBlock() instanceof IFluidContainerBlock fluidContainer && fluidContainer.canConnectPipe(state, side.getOpposite()) && this.getTransferMode(side).isInserting())
                     insertionTargets.add(new FluidContainerTarget(relative, side));
             }
-        });
 
-        pipes.forEach(pipePos -> {
+            if (level.getBlockEntity(pipePos) instanceof AbstractFluidPipeBlockEntity fluidPipe && fluidPipe.getBufferedFluid() != Fluids.EMPTY && fluidPipe.getBuffer() > 0)
+                currentFluid = fluidPipe.getBufferedFluid();
+        }
+
+
+        for (BlockPos pipePos : pipes) {
             if (level.getBlockEntity(pipePos) instanceof AbstractFluidPipeBlockEntity pipe)
-                pipe.updateNetworkInfo(level.getGameTime(), this.currentChunkStates, extractionTargets, insertionTargets);
-        });
+                pipe.updateNetworkInfo(currentFluid, level.getGameTime(), this.currentChunkStates, extractionTargets, insertionTargets);
+        }
     }
 
     private void trackPipes(ServerLevel level, BlockPos current, List<BlockPos> pipes, List<BlockPos> excludedPositions) {
@@ -268,7 +329,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         }
     }
 
-    private void updateNetworkInfo(long lastTick, Map<Direction, Boolean> presentChunkStates, List<FluidContainerTarget> fluidExtractionTargets, List<FluidContainerTarget> fluidInsertionTargets) {
+    private void updateNetworkInfo(Fluid currentFluid, long lastTick, Map<Direction, Boolean> presentChunkStates, List<FluidContainerTarget> fluidExtractionTargets, List<FluidContainerTarget> fluidInsertionTargets) {
 
         presentChunkStates.forEach((side, currentlyLoaded) -> {
             if (this.currentChunkStates.containsKey(side))
@@ -295,10 +356,22 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         this.fluidInsertionQueue.addAll(0, addedTargets);
 
 
+        //For transferring pipes
+        if (currentFluid != this.getBufferedFluid())
+            this.setFluid(currentFluid);
+
         this.lastTick = lastTick;
         this.setChanged();
     }
 
+
+    public void loopThroughTransferMode(Direction direction) {
+        TransferMode current = this.getTransferMode(direction);
+        this.setTransferMode(direction, current.next());
+
+        if (this.getLevel() instanceof ServerLevel serverLevel)
+            this.updatePipe(serverLevel, List.of());
+    }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
@@ -351,7 +424,9 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         });
         tag.put("insertionQueue", insertionQueueTagList);
 
+        tag.putBoolean("initialized", this.initialized);
         tag.putLong("lastTick", this.lastTick);
+        tag.putInt("emptyTick", this.emptyTick);
     }
 
 
@@ -367,7 +442,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         this.transferModes.clear();
         CompoundTag transferModeTag = tag.getCompound("transferModes");
         transferModeTag.getAllKeys().forEach(side -> {
-            this.transferModes.put(Direction.valueOf(side.toUpperCase()), TransferMode.valueOf(side));
+            this.transferModes.put(Direction.valueOf(side.toUpperCase()), TransferMode.valueOf(transferModeTag.getString(side)));
         });
 
         this.currentChunkStates.clear();
@@ -397,7 +472,9 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
             this.fluidInsertionQueue.add(new FluidContainerTarget(BlockPos.of(insertionTag.getLong("pos")), Direction.valueOf(insertionTag.getString("side"))));
         });
 
+        this.initialized = tag.getBoolean("initialized");
         this.lastTick = tag.getLong("lastTick");
+        this.emptyTick = tag.getInt("emptyTick");
     }
 
 
@@ -430,6 +507,10 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
 
         boolean isExtracting() {
             return this == EXTRACTING || this == INOUT;
+        }
+
+        TransferMode next() {
+            return this.ordinal() < values().length - 1 ? values()[this.ordinal() + 1] : NONE;
         }
     }
 }

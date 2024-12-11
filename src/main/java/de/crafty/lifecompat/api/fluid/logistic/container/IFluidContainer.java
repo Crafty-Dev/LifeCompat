@@ -18,6 +18,8 @@ public interface IFluidContainer {
 
     Fluid getFluid();
 
+    void setFluid(Fluid fluid);
+
     int fillWithLiquid(ServerLevel level, BlockPos pos, BlockState state, Fluid liquid, int amount);
 
     int drainLiquidFrom(ServerLevel level, BlockPos pos, BlockState state, Fluid liquid, int amount);
