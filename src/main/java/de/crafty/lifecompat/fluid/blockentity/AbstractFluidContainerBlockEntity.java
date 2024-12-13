@@ -70,6 +70,10 @@ public abstract class AbstractFluidContainerBlockEntity extends BlockEntity impl
 
     @Override
     public int fillWithLiquid(ServerLevel level, BlockPos pos, BlockState state, Fluid liquid, int amount) {
+        if(!(this.fluid == Fluids.EMPTY || this.fluid == liquid))
+            return 0;
+
+
         if(amount <= 0)
             return 0;
 

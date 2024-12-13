@@ -8,6 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
@@ -65,6 +66,10 @@ public abstract class AbstractFluidEnergyConsumerBlockEntity extends AbstractEne
 
     @Override
     public int fillWithLiquid(ServerLevel level, BlockPos pos, BlockState state, Fluid liquid, int amount) {
+        if(!(this.fluid == Fluids.EMPTY || this.fluid == liquid))
+            return 0;
+
+
         if(amount <= 0)
             return 0;
 
@@ -76,6 +81,8 @@ public abstract class AbstractFluidEnergyConsumerBlockEntity extends AbstractEne
 
             if(prevVolume <= 0)
                 this.setFluid(liquid);
+
+            level.sendBlockUpdated(pos, this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
         }
 
         return this.volume - prevVolume;
@@ -90,13 +97,15 @@ public abstract class AbstractFluidEnergyConsumerBlockEntity extends AbstractEne
         int prevVolume = this.volume;
         this.volume = Math.max(0, this.volume - amount);
 
-        if(prevVolume != this.volume)
-            this.setChanged();
+        if(prevVolume != this.volume){
+            if(this.volume == 0)
+                this.setFluid(Fluids.EMPTY);
 
-        if(this.volume <= 0)
-            this.setFluid(Fluids.EMPTY);
+            level.sendBlockUpdated(pos, this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
+        }
 
-        return amount - (prevVolume - this.volume);
+
+        return prevVolume - this.volume;
     }
 
     @Override

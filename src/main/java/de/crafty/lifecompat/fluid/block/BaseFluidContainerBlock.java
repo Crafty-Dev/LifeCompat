@@ -54,14 +54,6 @@ public abstract class BaseFluidContainerBlock extends BaseEntityBlock implements
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
-        if (level.getBlockEntity(blockPos) instanceof IFluidContainer fluidContainer)
-            System.out.println(fluidContainer.getFluid() + " = " + fluidContainer.getVolume() + "/" + fluidContainer.getCapacity());
-
-        return super.useWithoutItem(blockState, level, blockPos, player, blockHitResult);
-    }
-
-    @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         if (!(stack.getItem() instanceof BucketItem bucket) || !(level.getBlockEntity(blockPos) instanceof IFluidContainer fluidContainer))
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
@@ -73,10 +65,10 @@ public abstract class BaseFluidContainerBlock extends BaseEntityBlock implements
                 if (!filled.isEmpty() && fluidContainer.getVolume() >= FluidUnitConverter.buckets(1.0F)) {
                     fluidContainer.getFluid().getPickupSound().ifPresent(soundEvent -> player.playSound(soundEvent, 1.0F, 1.0F));
 
-                    if (!level.isClientSide())
+                    if (!level.isClientSide()){
                         fluidContainer.drainLiquidFrom((ServerLevel) level, blockPos, blockState, fluidContainer.getFluid(), FluidUnitConverter.buckets(1.0F));
-
-                    ItemUtils.createFilledResult(stack, player, filled);
+                        player.setItemInHand(interactionHand, ItemUtils.createFilledResult(stack, player, filled));
+                    }
                 }
             }
 
@@ -92,10 +84,11 @@ public abstract class BaseFluidContainerBlock extends BaseEntityBlock implements
 
                 this.getBucketEmptySound(bucket.content, level, blockPos, blockState).ifPresent(soundEvent -> player.playSound(soundEvent, 1.0F, 1.0F));
 
-                if (!level.isClientSide())
+                if (!level.isClientSide()){
                     fluidContainer.fillWithLiquid((ServerLevel) level, blockPos, blockState, bucket.content, FluidUnitConverter.buckets(1.0F));
+                    player.setItemInHand(interactionHand, ItemUtils.createFilledResult(stack, player, emptyBucket));
+                }
 
-                ItemUtils.createFilledResult(stack, player, emptyBucket);
 
             }
 

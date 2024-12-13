@@ -23,4 +23,8 @@ public interface IFluidContainer {
     int fillWithLiquid(ServerLevel level, BlockPos pos, BlockState state, Fluid liquid, int amount);
 
     int drainLiquidFrom(ServerLevel level, BlockPos pos, BlockState state, Fluid liquid, int amount);
+
+    boolean canDrainLiquid(ServerLevel level, BlockPos pos, BlockState state);
+
+    boolean canFillLiquid(ServerLevel level, BlockPos pos, BlockState state);
 }

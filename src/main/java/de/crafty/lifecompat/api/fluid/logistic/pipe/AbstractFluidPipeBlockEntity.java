@@ -40,7 +40,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
     private List<FluidContainerTarget> fluidExtractionTargets = new ArrayList<>();
     private List<FluidContainerTarget> fluidInsertionTargets = new ArrayList<>();
 
-    private List<FluidContainerTarget> fluidInsertionQueue = new ArrayList<>();
+    private final List<FluidContainerTarget> fluidInsertionQueue = new ArrayList<>();
 
     private boolean initialized;
     private long lastTick;
@@ -87,9 +87,9 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
     private void initTransferModes() {
         BlockState state = this.getBlockState();
 
-       for(Direction side : Direction.values()){
-           this.transferModes.put(side, TransferMode.EXTRACTING);
-       }
+        for (Direction side : Direction.values()) {
+            this.transferModes.put(side, TransferMode.EXTRACTING);
+        }
 
         this.setChanged();
     }
@@ -166,14 +166,14 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
 
         //Extraction
         for (Direction side : Direction.values()) {
-            if(BaseFluidPipeBlock.getConnectionStateForNeighbor(level, pos, side) != BaseFluidPipeBlock.ConnectionState.ATTACHED)
+            if (BaseFluidPipeBlock.getConnectionStateForNeighbor(level, pos, side) != BaseFluidPipeBlock.ConnectionState.ATTACHED)
                 continue;
 
             if (this.getTransferMode(side).isExtracting()) {
                 BlockPos relative = pos.relative(side);
                 BlockState fluidContainerState = level.getBlockState(relative);
 
-                if (level.getBlockEntity(relative) instanceof IFluidContainer fluidContainer) {
+                if (level.getBlockEntity(relative) instanceof IFluidContainer fluidContainer && fluidContainer.canDrainLiquid(level, pos, state)) {
                     Fluid containerFluid = fluidContainer.getFluid();
 
                     if (containerFluid == Fluids.EMPTY)
@@ -205,7 +205,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
             if (this.getBuffer() <= 0)
                 break;
 
-            if (level.getBlockEntity(target.pos()) instanceof IFluidContainer fluidContainer) {
+            if (level.getBlockEntity(target.pos()) instanceof IFluidContainer fluidContainer && fluidContainer.canFillLiquid(level, pos, state)) {
                 int transferred = fluidContainer.fillWithLiquid(level, target.pos(), level.getBlockState(target.pos()), this.fluid, Math.min(this.getBuffer(), this.getInsertionRate()));
                 if (transferred == 0)
                     continue;
@@ -297,13 +297,24 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         Fluid currentFluid = Fluids.EMPTY;
 
         for (BlockPos pipePos : pipes) {
+
+            if (!(level.getBlockEntity(pipePos) instanceof AbstractFluidPipeBlockEntity pipe))
+                continue;
+
             for (Direction side : Direction.values()) {
                 BlockPos relative = pipePos.relative(side);
                 BlockState state = level.getBlockState(relative);
-                if (state.getBlock() instanceof IFluidContainerBlock fluidContainer && fluidContainer.canConnectPipe(state, side.getOpposite()) && this.getTransferMode(side).isExtracting())
+
+                if (state.getBlock() instanceof IFluidContainerBlock fluidContainer
+                        && fluidContainer.canConnectPipe(state, side.getOpposite())
+                        && pipe.getTransferMode(side).isExtracting()
+                )
                     extractionTargets.add(new FluidContainerTarget(relative, side));
 
-                if (state.getBlock() instanceof IFluidContainerBlock fluidContainer && fluidContainer.canConnectPipe(state, side.getOpposite()) && this.getTransferMode(side).isInserting())
+                if (state.getBlock() instanceof IFluidContainerBlock fluidContainer
+                        && fluidContainer.canConnectPipe(state, side.getOpposite())
+                        && pipe.getTransferMode(side).isInserting())
+
                     insertionTargets.add(new FluidContainerTarget(relative, side));
             }
 
