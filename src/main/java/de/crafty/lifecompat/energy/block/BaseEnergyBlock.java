@@ -1,5 +1,6 @@
 package de.crafty.lifecompat.energy.block;
 
+import de.crafty.lifecompat.api.fluid.logistic.container.IFluidContainerBlock;
 import de.crafty.lifecompat.util.EnergyUnitConverter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class BaseEnergyBlock extends BaseEntityBlock {
 
@@ -55,7 +57,7 @@ public abstract class BaseEnergyBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
 
     //A map of all facings with their associated relative sides
-    private static final HashMap<Direction, List<Direction>> RELATIVE_DIRECTIONS = BaseEnergyBlock.preGenerateRelativeDirections();
+    private static final Map<Direction, List<Direction>> RELATIVE_DIRECTIONS = BaseEnergyBlock.preGenerateRelativeDirections();
 
 
     private final boolean showEnergyTooltip;
@@ -96,9 +98,8 @@ public abstract class BaseEnergyBlock extends BaseEntityBlock {
         return RenderShape.MODEL;
     }
 
-    @Override
-    protected InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
-
+    //Returns true when an IO property changed
+    protected boolean tryChangeIO(Level level, BlockPos blockPos, BlockState blockState, Player player, Direction side){
         DirectionProperty facingProp = null;
         if (blockState.hasProperty(HORIZONTAL_FACING))
             facingProp = HORIZONTAL_FACING;
@@ -107,24 +108,21 @@ public abstract class BaseEnergyBlock extends BaseEntityBlock {
 
         Direction facing = facingProp == null ? Direction.NORTH : blockState.getValue(facingProp);
 
-        Direction side = blockHitResult.getDirection();
-        if (player.isCrouching() || player.isShiftKeyDown()) {
-            EnumProperty<IOMode> sideMode = BaseEnergyBlock.calculateIOSide(facing, side);
-            if (sideMode != null && blockState.hasProperty(sideMode)) {
-                IOMode next = blockState.getValue(sideMode).next(this);
-                player.displayClientMessage(
-                        Component.translatable("energy.lifecompat.io." + sideMode.getName())
-                                .append(": ")
-                                .withStyle(ChatFormatting.GRAY)
-                                .append(Component.translatable("energy.lifecompat.io." + next.getSerializedName()).withStyle(ChatFormatting.BLUE)),
-                        true);
+        EnumProperty<IOMode> sideMode = BaseEnergyBlock.calculateIOSide(facing, side);
+        if (sideMode != null && blockState.hasProperty(sideMode)) {
+            IOMode next = blockState.getValue(sideMode).next(this);
+            player.displayClientMessage(
+                    Component.translatable("energy.lifecompat.io." + sideMode.getName())
+                            .append(": ")
+                            .withStyle(ChatFormatting.GRAY)
+                            .append(Component.translatable("energy.lifecompat.io." + next.getSerializedName()).withStyle(ChatFormatting.BLUE)),
+                    true);
 
-                level.setBlock(blockPos, blockState.setValue(sideMode, next), Block.UPDATE_ALL);
-                return InteractionResult.sidedSuccess(level.isClientSide());
-            }
+            level.setBlock(blockPos, blockState.setValue(sideMode, next), Block.UPDATE_ALL);
+            return true;
         }
 
-        return InteractionResult.PASS;
+        return false;
     }
 
     @Override

@@ -11,31 +11,33 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 
 public abstract class AbstractFluidEnergyProviderBlockEntity extends AbstractEnergyProvider implements IFluidContainer {
 
     private Fluid fluid;
-    private int volume, capacity;
+    private int volume, fluidCapacity;
 
     public AbstractFluidEnergyProviderBlockEntity(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState, int energyCacheSize, int initialFluidCapacity) {
         super(blockEntityType, blockPos, blockState, energyCacheSize);
 
         this.fluid = Fluids.EMPTY;
         this.volume = 0;
-        this.capacity = initialFluidCapacity;
+        this.fluidCapacity = initialFluidCapacity;
+    }
+
+
+    @Override
+    public int getFluidCapacity() {
+        return this.fluidCapacity;
     }
 
     @Override
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
+    public void setFluidCapacity(int fluidCapacity) {
+        this.fluidCapacity = fluidCapacity;
         this.setChanged();
-    }
-
-    @Override
-    public int getCapacity() {
-        return this.capacity;
     }
 
     @Override
@@ -72,7 +74,7 @@ public abstract class AbstractFluidEnergyProviderBlockEntity extends AbstractEne
             return 0;
 
         int prevVolume = this.volume;
-        this.setVolume(Math.min(this.getCapacity(), this.volume + amount));
+        this.setVolume(Math.min(this.getFluidCapacity(), this.volume + amount));
 
         if(prevVolume != this.volume){
             this.setChanged();
@@ -80,7 +82,8 @@ public abstract class AbstractFluidEnergyProviderBlockEntity extends AbstractEne
             if(prevVolume <= 0)
                 this.setFluid(liquid);
 
-            level.sendBlockUpdated(pos, this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
+            level.gameEvent(GameEvent.BLOCK_CHANGE, this.getBlockPos(), GameEvent.Context.of(this.getBlockState()));
+            level.sendBlockUpdated(pos, this.getBlockState(), this.getBlockState(), Block.UPDATE_ALL);
         }
 
         return this.volume - prevVolume;
@@ -99,7 +102,8 @@ public abstract class AbstractFluidEnergyProviderBlockEntity extends AbstractEne
             if(this.volume == 0)
                 this.setFluid(Fluids.EMPTY);
 
-            level.sendBlockUpdated(pos, this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
+            level.gameEvent(GameEvent.BLOCK_CHANGE, this.getBlockPos(), GameEvent.Context.of(this.getBlockState()));
+            level.sendBlockUpdated(pos, this.getBlockState(), this.getBlockState(), Block.UPDATE_ALL);
         }
 
 
@@ -113,7 +117,7 @@ public abstract class AbstractFluidEnergyProviderBlockEntity extends AbstractEne
         tag.putString("fluid", BuiltInRegistries.FLUID.getKey(this.fluid).toString());
 
         tag.putInt("volume", this.getVolume());
-        tag.putInt("capacity", this.getCapacity());
+        tag.putInt("fluidCapacity", this.getFluidCapacity());
     }
 
     @Override
@@ -123,6 +127,6 @@ public abstract class AbstractFluidEnergyProviderBlockEntity extends AbstractEne
         this.fluid = BuiltInRegistries.FLUID.get(ResourceLocation.parse(tag.getString("fluid")));
 
         this.volume = tag.getInt("volume");
-        this.capacity = tag.getInt("capacity");
+        this.fluidCapacity = tag.getInt("fluidCapacity");
     }
 }

@@ -4,6 +4,7 @@ import de.crafty.lifecompat.api.energy.IEnergyConsumer;
 import de.crafty.lifecompat.api.energy.IEnergyHolder;
 import de.crafty.lifecompat.api.energy.IEnergyProvider;
 import de.crafty.lifecompat.api.energy.provider.AbstractEnergyProvider;
+import de.crafty.lifecompat.energy.block.BaseEnergyBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -16,7 +17,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class AbstractEnergyContainer extends BlockEntity implements IEnergyProvider, IEnergyConsumer, IEnergyHolder {
 
@@ -36,12 +42,12 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
 
 
     @Override
-    public int getCapacity() {
+    public int getEnergyCapacity() {
         return this.energyCapacity;
     }
 
     @Override
-    public void setCapacity(int capacity) {
+    public void setEnergyCapacity(int capacity) {
         this.energyCapacity = capacity;
     }
 
@@ -65,7 +71,7 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
         int prevEnergy = this.energy;
 
         int updated = this.energy + clampedInput;
-        this.energy = Math.min(updated, this.getCapacity());
+        this.energy = Math.min(updated, this.getEnergyCapacity());
 
         if(this.energy != prevEnergy){
             this.setChanged();
@@ -102,15 +108,44 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
     }
 
     @Override
+    public List<Direction> getInputDirections(ServerLevel world, BlockPos pos, BlockState state) {
+        List<Direction> directions = new ArrayList<>();
+
+        for (Direction side : Direction.values()) {
+            DirectionProperty facingProp = state.hasProperty(BaseEnergyBlock.FACING) ? BaseEnergyBlock.FACING : state.hasProperty(BaseEnergyBlock.HORIZONTAL_FACING) ? BaseEnergyBlock.HORIZONTAL_FACING : null;
+            EnumProperty<BaseEnergyBlock.IOMode> sideMode = BaseEnergyBlock.calculateIOSide(facingProp != null ? state.getValue(facingProp) : Direction.NORTH, side);
+
+            if (state.hasProperty(sideMode) && state.getValue(sideMode).isInput())
+                directions.add(side);
+        }
+
+        return directions;
+    }
+
+    @Override
+    public List<Direction> getOutputDirections(ServerLevel level, BlockPos pos, BlockState state) {
+        List<Direction> directions = new ArrayList<>();
+
+        for (Direction side : Direction.values()) {
+            DirectionProperty facingProp = state.hasProperty(BaseEnergyBlock.FACING) ? BaseEnergyBlock.FACING : state.hasProperty(BaseEnergyBlock.HORIZONTAL_FACING) ? BaseEnergyBlock.HORIZONTAL_FACING : null;
+            EnumProperty<BaseEnergyBlock.IOMode> sideMode = BaseEnergyBlock.calculateIOSide(facingProp != null ? state.getValue(facingProp) : Direction.NORTH, side);
+            if (state.hasProperty(sideMode) && state.getValue(sideMode).isOutput())
+                directions.add(side);
+        }
+
+        return directions;
+    }
+
+    @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         tag.putInt("energy", this.energy);
-        tag.putInt("capacity", this.energyCapacity);
+        tag.putInt("energyCapacity", this.energyCapacity);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         this.energy = tag.getInt("energy");
-        this.energyCapacity = tag.getInt("capacity");
+        this.energyCapacity = tag.getInt("energyCapacity");
     }
 
     @Override

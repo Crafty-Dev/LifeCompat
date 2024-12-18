@@ -8,9 +8,9 @@ import net.minecraft.world.level.material.Fluid;
 public interface IFluidContainer {
 
 
-    void setCapacity(int capacity);
+    void setFluidCapacity(int capacity);
 
-    int getCapacity();
+    int getFluidCapacity();
 
     void setVolume(int volume);
 

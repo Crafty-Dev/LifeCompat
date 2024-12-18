@@ -37,12 +37,12 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
     }
 
     @Override
-    public int getCapacity() {
+    public int getEnergyCapacity() {
         return this.energyCacheSize;
     }
 
     @Override
-    public void setCapacity(int capacity) {
+    public void setEnergyCapacity(int capacity) {
         this.energyCacheSize = capacity;
     }
 
@@ -72,7 +72,7 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
 
     protected void energyTick(ServerLevel level, BlockPos pos, BlockState state) {
         if (this.isGenerating(level, pos, state)) {
-            this.energy = Math.min(this.energy + this.getGenerationPerTick(level, pos, state), this.getCapacity());
+            this.energy = Math.min(this.energy + this.getGenerationPerTick(level, pos, state), this.getEnergyCapacity());
             this.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -135,13 +135,13 @@ public abstract class AbstractEnergyProvider extends BlockEntity implements IEne
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         tag.putInt("energy", this.energy);
-        tag.putInt("capacity", this.energyCacheSize);
+        tag.putInt("energyCapacity", this.energyCacheSize);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         this.energy = tag.getInt("energy");
-        this.energyCacheSize = tag.getInt("capacity");
+        this.energyCacheSize = tag.getInt("energyCapacity");
     }
 
     @Override

@@ -57,12 +57,12 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
     }
 
     @Override
-    public int getCapacity() {
+    public int getEnergyCapacity() {
         return this.energyCapacity;
     }
 
     @Override
-    public void setCapacity(int capacity) {
+    public void setEnergyCapacity(int capacity) {
         this.energyCapacity = capacity;
     }
 
@@ -100,7 +100,7 @@ public abstract class AbstractEnergyCableBlockEntity extends BlockEntity impleme
         int clampedInput = Math.min(incoming, this.getMaxInput(serverLevel, blockPos, blockState));
         int updated = this.energy + clampedInput;
 
-        this.setEnergy(Math.min(updated, this.getCapacity()));
+        this.setEnergy(Math.min(updated, this.getEnergyCapacity()));
         return (updated - this.energy) + (incoming - clampedInput);
     }
 

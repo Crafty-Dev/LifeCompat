@@ -1,6 +1,6 @@
 package de.crafty.lifecompat.fluid.blockentity;
 
-import de.crafty.lifecompat.api.energy.consumer.AbstractEnergyConsumer;
+import de.crafty.lifecompat.api.energy.container.AbstractEnergyContainer;
 import de.crafty.lifecompat.api.fluid.logistic.container.IFluidContainer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -15,18 +15,19 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 
-public abstract class AbstractFluidEnergyConsumerBlockEntity extends AbstractEnergyConsumer implements IFluidContainer {
+public abstract class AbstractFluidEnergyContainerBlockEntity extends AbstractEnergyContainer implements IFluidContainer {
 
     private Fluid fluid;
     private int volume, fluidCapacity;
 
-    public AbstractFluidEnergyConsumerBlockEntity(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState, int energyCacheSize, int initialFluidCapacity) {
-        super(blockEntityType, blockPos, blockState, energyCacheSize);
+    public AbstractFluidEnergyContainerBlockEntity(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState, int energyCapacity, int initialFluidCapacity) {
+        super(blockEntityType, blockPos, blockState, energyCapacity);
 
         this.fluid = Fluids.EMPTY;
         this.volume = 0;
         this.fluidCapacity = initialFluidCapacity;
     }
+
 
     @Override
     public int getFluidCapacity() {
@@ -40,14 +41,14 @@ public abstract class AbstractFluidEnergyConsumerBlockEntity extends AbstractEne
     }
 
     @Override
-    public void setVolume(int volume) {
-        this.volume = volume;
-        this.setChanged();
+    public int getVolume() {
+        return this.volume;
     }
 
     @Override
-    public int getVolume() {
-        return this.volume;
+    public void setVolume(int volume) {
+        this.volume = volume;
+        this.setChanged();
     }
 
     @Override
@@ -60,9 +61,9 @@ public abstract class AbstractFluidEnergyConsumerBlockEntity extends AbstractEne
         this.fluid = fluid;
         if(fluid == Fluids.EMPTY)
             this.volume = 0;
+
         this.setChanged();
     }
-
 
     @Override
     public int fillWithLiquid(ServerLevel level, BlockPos pos, BlockState state, Fluid liquid, int amount) {
@@ -129,5 +130,4 @@ public abstract class AbstractFluidEnergyConsumerBlockEntity extends AbstractEne
         this.volume = tag.getInt("volume");
         this.fluidCapacity = tag.getInt("fluidCapacity");
     }
-
 }

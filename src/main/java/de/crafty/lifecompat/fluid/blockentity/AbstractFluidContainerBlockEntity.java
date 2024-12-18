@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractFluidContainerBlockEntity extends BlockEntity implements IFluidContainer {
 
     private Fluid fluid;
-    private int volume, capacity;
+    private int volume, fluidCapacity;
 
 
     public AbstractFluidContainerBlockEntity(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState, int initialCapacity) {
@@ -30,18 +31,18 @@ public abstract class AbstractFluidContainerBlockEntity extends BlockEntity impl
 
         this.fluid = Fluids.EMPTY;
         this.volume = 0;
-        this.capacity = initialCapacity;
+        this.fluidCapacity = initialCapacity;
     }
 
     @Override
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
+    public void setFluidCapacity(int capacity) {
+        this.fluidCapacity = capacity;
         this.setChanged();
     }
 
     @Override
-    public int getCapacity() {
-        return this.capacity;
+    public int getFluidCapacity() {
+        return this.fluidCapacity;
     }
 
     @Override
@@ -78,7 +79,7 @@ public abstract class AbstractFluidContainerBlockEntity extends BlockEntity impl
             return 0;
 
         int prevVolume = this.volume;
-        this.setVolume(Math.min(this.getCapacity(), this.volume + amount));
+        this.setVolume(Math.min(this.getFluidCapacity(), this.volume + amount));
 
         if(prevVolume != this.volume){
             this.setChanged();
@@ -86,7 +87,8 @@ public abstract class AbstractFluidContainerBlockEntity extends BlockEntity impl
             if(prevVolume <= 0)
                 this.setFluid(liquid);
 
-            level.sendBlockUpdated(pos, this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
+            level.gameEvent(GameEvent.BLOCK_CHANGE, this.getBlockPos(), GameEvent.Context.of(this.getBlockState()));
+            level.sendBlockUpdated(pos, this.getBlockState(), this.getBlockState(), Block.UPDATE_ALL);
         }
 
         return this.volume - prevVolume;
@@ -105,7 +107,8 @@ public abstract class AbstractFluidContainerBlockEntity extends BlockEntity impl
             if(this.volume == 0)
                 this.setFluid(Fluids.EMPTY);
 
-            level.sendBlockUpdated(pos, this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
+            level.gameEvent(GameEvent.BLOCK_CHANGE, this.getBlockPos(), GameEvent.Context.of(this.getBlockState()));
+            level.sendBlockUpdated(pos, this.getBlockState(), this.getBlockState(), Block.UPDATE_ALL);
         }
 
 
@@ -119,7 +122,7 @@ public abstract class AbstractFluidContainerBlockEntity extends BlockEntity impl
         tag.putString("fluid", BuiltInRegistries.FLUID.getKey(this.fluid).toString());
 
         tag.putInt("volume", this.getVolume());
-        tag.putInt("capacity", this.getCapacity());
+        tag.putInt("fluidCapacity", this.getFluidCapacity());
     }
 
     @Override
@@ -128,7 +131,7 @@ public abstract class AbstractFluidContainerBlockEntity extends BlockEntity impl
         this.fluid = BuiltInRegistries.FLUID.get(ResourceLocation.parse(tag.getString("fluid")));
 
         this.volume = tag.getInt("volume");
-        this.capacity = tag.getInt("capacity");
+        this.fluidCapacity = tag.getInt("fluidCapacity");
     }
 
     @Override

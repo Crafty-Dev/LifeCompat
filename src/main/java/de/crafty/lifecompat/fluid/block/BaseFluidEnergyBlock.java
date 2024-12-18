@@ -77,7 +77,7 @@ public abstract class BaseFluidEnergyBlock extends BaseEnergyBlock implements IF
             if (emptyBucket.isEmpty())
                 return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
 
-            if (this.allowBucketEmpty(blockState) && fluidContainer.getCapacity() > fluidContainer.getVolume()) {
+            if (this.allowBucketEmpty(blockState) && fluidContainer.getFluidCapacity() > fluidContainer.getVolume()) {
 
                 this.getBucketEmptySound(bucket.content, level, blockPos, blockState).ifPresent(soundEvent -> player.playSound(soundEvent, 1.0F, 1.0F));
 

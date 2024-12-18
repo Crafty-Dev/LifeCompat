@@ -11,8 +11,6 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -36,12 +34,12 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
     }
 
     @Override
-    public int getCapacity() {
+    public int getEnergyCapacity() {
         return this.energyCacheSize;
     }
 
     @Override
-    public void setCapacity(int capacity) {
+    public void setEnergyCapacity(int capacity) {
         this.energyCacheSize = capacity;
     }
 
@@ -62,6 +60,7 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
         for (Direction side : Direction.values()) {
             DirectionProperty facingProp = state.hasProperty(BaseEnergyBlock.FACING) ? BaseEnergyBlock.FACING : state.hasProperty(BaseEnergyBlock.HORIZONTAL_FACING) ? BaseEnergyBlock.HORIZONTAL_FACING : null;
             EnumProperty<BaseEnergyBlock.IOMode> sideMode = BaseEnergyBlock.calculateIOSide(facingProp != null ? state.getValue(facingProp) : Direction.NORTH, side);
+
             if (state.hasProperty(sideMode) && state.getValue(sideMode).isInput())
                 directions.add(side);
         }
@@ -77,7 +76,7 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
         int clampedInput = Math.min(energy, this.getMaxInput(level, pos, state));
 
         int updated = this.energy + clampedInput;
-        this.energy = Math.min(updated, this.getCapacity());
+        this.energy = Math.min(updated, this.getEnergyCapacity());
         this.setChanged();
         level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
 
@@ -103,13 +102,13 @@ public abstract class AbstractEnergyConsumer extends BlockEntity implements IEne
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         tag.putInt("energy", this.energy);
-        tag.putInt("capacity", this.energyCacheSize);
+        tag.putInt("energyCapacity", this.energyCacheSize);
     }
 
     @Override
     protected void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
         this.energy = compoundTag.getInt("energy");
-        this.energyCacheSize = compoundTag.getInt("capacity");
+        this.energyCacheSize = compoundTag.getInt("energyCapacity");
 
     }
 
