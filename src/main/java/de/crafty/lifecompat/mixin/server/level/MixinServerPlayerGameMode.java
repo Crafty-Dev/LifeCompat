@@ -31,14 +31,14 @@ public abstract class MixinServerPlayerGameMode {
     @Inject(method = "useItem", at = @At("HEAD"), cancellable = true)
     private void hookIntoItemUse(ServerPlayer serverPlayer, Level level, ItemStack itemStack, InteractionHand interactionHand, CallbackInfoReturnable<InteractionResult> cir){
         ItemUseEvent.Callback callback = EventManager.callEvent(BaseEvents.ITEM_USE, new ItemUseEvent.Callback(serverPlayer, level, itemStack, interactionHand));
-        if(callback.getActionResult() != InteractionResult.PASS)
+        if(callback.getActionResult().consumesAction())
             cir.setReturnValue(callback.getActionResult());
     }
 
     @Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
     private void hookIntoBlockInteract(ServerPlayer serverPlayer, Level level, ItemStack itemStack, InteractionHand interactionHand, BlockHitResult blockHitResult, CallbackInfoReturnable<InteractionResult> cir){
         BlockInteractEvent.Callback callback = EventManager.callEvent(BaseEvents.BLOCK_INTERACT, new BlockInteractEvent.Callback(serverPlayer, level, itemStack, interactionHand, blockHitResult));
-        if(callback.getActionResult() != InteractionResult.PASS)
+        if(callback.getActionResult().consumesAction())
             cir.setReturnValue(callback.getActionResult());
     }
 

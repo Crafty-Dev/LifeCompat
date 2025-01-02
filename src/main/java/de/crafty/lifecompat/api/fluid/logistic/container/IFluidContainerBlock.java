@@ -3,7 +3,7 @@ package de.crafty.lifecompat.api.fluid.logistic.container;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 
 import java.util.HashMap;
 import java.util.List;
@@ -11,8 +11,8 @@ import java.util.Map;
 
 public interface IFluidContainerBlock {
 
-    DirectionProperty HORIZONTAL_FACING = BlockStateProperties.HORIZONTAL_FACING;
-    DirectionProperty FFACING = BlockStateProperties.FACING;
+    EnumProperty<Direction> HORIZONTAL_FACING = BlockStateProperties.HORIZONTAL_FACING;
+    EnumProperty<Direction> FFACING = BlockStateProperties.FACING;
 
     Map<Direction, List<Direction>> RELATIVE_DIRECTIONS = createRelativeDirections();
 

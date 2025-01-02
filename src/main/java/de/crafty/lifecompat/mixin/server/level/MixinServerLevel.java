@@ -24,8 +24,10 @@ import java.util.function.Supplier;
 
 @Mixin(ServerLevel.class)
 public abstract class MixinServerLevel extends Level implements WorldGenLevel {
-    protected MixinServerLevel(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i) {
-        super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
+
+
+    protected MixinServerLevel(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, boolean bl, boolean bl2, long l, int i) {
+        super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);
     }
 
     @Inject(method = "sendBlockUpdated", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerChunkCache;blockChanged(Lnet/minecraft/core/BlockPos;)V", shift = At.Shift.AFTER))

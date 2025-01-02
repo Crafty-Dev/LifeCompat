@@ -24,7 +24,6 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -53,8 +52,8 @@ public abstract class BaseEnergyBlock extends BaseEntityBlock {
         return prop;
     }
 
-    public static final DirectionProperty HORIZONTAL_FACING = BlockStateProperties.HORIZONTAL_FACING;
-    public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    public static final EnumProperty<Direction> HORIZONTAL_FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
 
     //A map of all facings with their associated relative sides
     private static final Map<Direction, List<Direction>> RELATIVE_DIRECTIONS = BaseEnergyBlock.preGenerateRelativeDirections();
@@ -100,7 +99,7 @@ public abstract class BaseEnergyBlock extends BaseEntityBlock {
 
     //Returns true when an IO property changed
     protected boolean tryChangeIO(Level level, BlockPos blockPos, BlockState blockState, Player player, Direction side){
-        DirectionProperty facingProp = null;
+        EnumProperty<Direction> facingProp = null;
         if (blockState.hasProperty(HORIZONTAL_FACING))
             facingProp = HORIZONTAL_FACING;
         if (blockState.hasProperty(FACING))

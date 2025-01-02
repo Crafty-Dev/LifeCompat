@@ -15,7 +15,7 @@ public class EnergyUnitConverter {
 
     public static String format(int energy){
         if(energy / 1000000.0F >= 1)
-            return String.format("%.1fmVP", energy / 1000000.0F);
+            return String.format("%.1fMVP", energy / 1000000.0F);
         if(energy / 1000F >= 1)
             return String.format("%.1fkVP", energy / 1000F);
 
@@ -24,7 +24,7 @@ public class EnergyUnitConverter {
 
     public static String formatRaw(int energy){
         if(energy / 1000000.0F >= 1)
-            return String.format("%.1fm", energy / 1000000.0F);
+            return String.format("%.1fM", energy / 1000000.0F);
         if(energy / 1000F >= 1)
             return String.format("%.1fk", energy / 1000.0F);
 

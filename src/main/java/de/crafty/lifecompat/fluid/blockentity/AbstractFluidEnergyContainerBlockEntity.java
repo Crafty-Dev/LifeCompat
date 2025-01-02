@@ -125,7 +125,7 @@ public abstract class AbstractFluidEnergyContainerBlockEntity extends AbstractEn
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
 
-        this.fluid = BuiltInRegistries.FLUID.get(ResourceLocation.parse(tag.getString("fluid")));
+        this.fluid = BuiltInRegistries.FLUID.getValue(ResourceLocation.parse(tag.getString("fluid")));
 
         this.volume = tag.getInt("volume");
         this.fluidCapacity = tag.getInt("fluidCapacity");

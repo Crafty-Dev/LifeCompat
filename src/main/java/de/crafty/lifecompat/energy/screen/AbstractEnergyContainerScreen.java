@@ -7,6 +7,7 @@ import de.crafty.lifecompat.util.EnergyUnitConverter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -70,8 +71,8 @@ public abstract class AbstractEnergyContainerScreen<T extends AbstractEnergyCont
         poseStack.pushPose();
         poseStack.translate(barX, barY, 0);
         poseStack.scale(scale, scale, 1.0F);
-        guiGraphics.blit(ENERGY_BAR, 0, 0, 0, 0, 152, 18);
-        guiGraphics.blit(ENERGY_BAR, 0, 0, 0, 18 + (this.energyBarTick / 4) * 18, 2 + Math.round(148 * this.getFillStatus()), 18);
+        guiGraphics.blit(RenderType::guiTextured, ENERGY_BAR, 0, 0, 0, 0, 152, 18, 256, 256);
+        guiGraphics.blit(RenderType::guiTextured, ENERGY_BAR, 0, 0, 0, 18 + (this.energyBarTick / 4) * 18, 2 + Math.round(148 * this.getFillStatus()), 18, 256, 256);
         poseStack.popPose();
 
         //Info Rndering
@@ -86,7 +87,7 @@ public abstract class AbstractEnergyContainerScreen<T extends AbstractEnergyCont
         poseStack.pushPose();
         poseStack.translate(infoX, infoY, 0);
         poseStack.scale(infoScale, infoScale, 1.0F);
-        guiGraphics.blit(ENERGY_BAR, 0, 0, 152, 0, 96, 18);
+        guiGraphics.blit(RenderType::guiTextured, ENERGY_BAR, 0, 0, 152, 0, 96, 18, 256, 256);
         poseStack.popPose();
 
         float fontScale = 0.5F;

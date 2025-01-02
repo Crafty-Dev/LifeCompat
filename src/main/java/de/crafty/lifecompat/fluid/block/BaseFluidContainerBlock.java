@@ -9,7 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
@@ -49,9 +49,9 @@ public abstract class BaseFluidContainerBlock extends BaseEntityBlock implements
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+    protected InteractionResult useItemOn(ItemStack stack, BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         if (!(stack.getItem() instanceof BucketItem bucket) || !(level.getBlockEntity(blockPos) instanceof IFluidContainer fluidContainer))
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
 
         if (bucket.content == Fluids.EMPTY) {
             ItemStack filled = BucketCompatibility.getFilledBucket(bucket, fluidContainer.getFluid());
@@ -67,13 +67,13 @@ public abstract class BaseFluidContainerBlock extends BaseEntityBlock implements
                 }
             }
 
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            return InteractionResult.SUCCESS;
         }
 
         if (bucket.content == fluidContainer.getFluid() || fluidContainer.getFluid() == Fluids.EMPTY) {
             ItemStack emptyBucket = BucketCompatibility.getEmptyBucket(bucket);
             if (emptyBucket.isEmpty())
-                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+                return InteractionResult.TRY_WITH_EMPTY_HAND;
 
             if (this.allowBucketEmpty(blockState) && fluidContainer.getFluidCapacity() > fluidContainer.getVolume()) {
 
@@ -87,11 +87,11 @@ public abstract class BaseFluidContainerBlock extends BaseEntityBlock implements
 
             }
 
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            return InteractionResult.SUCCESS;
         }
 
 
-        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
 

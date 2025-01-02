@@ -128,7 +128,7 @@ public abstract class AbstractFluidContainerBlockEntity extends BlockEntity impl
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
 
-        this.fluid = BuiltInRegistries.FLUID.get(ResourceLocation.parse(tag.getString("fluid")));
+        this.fluid = BuiltInRegistries.FLUID.getValue(ResourceLocation.parse(tag.getString("fluid")));
 
         this.volume = tag.getInt("volume");
         this.fluidCapacity = tag.getInt("fluidCapacity");

@@ -17,7 +17,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,26 +81,43 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
         return (updated - this.energy) + (energy - clampedInput);
     }
 
+    protected abstract void performAction(ServerLevel level, BlockPos pos, BlockState state);
+
     protected void energyTick(ServerLevel level, BlockPos pos, BlockState state) {
-        if (!this.isTransferring(level, pos, state))
-            return;
-
-
-        boolean changed = false;
-        for (Direction outputSide : this.getOutputDirections(level, pos, state)) {
-            int transferable = Math.min(this.energy, this.getMaxOutput(level, pos, state));
-
-            BlockPos consumerPos = pos.relative(outputSide);
-
-            int transferred = AbstractEnergyProvider.transferEnergy(level, consumerPos, level.getBlockState(consumerPos), transferable, outputSide.getOpposite());
-            this.energy -= transferred;
-
-            if (transferred > 0 && !changed)
-                changed = true;
-
+        if (this.isGenerating(level, pos, state)) {
+            this.energy = Math.min(this.energy + this.getGenerationPerTick(level, pos, state), this.getEnergyCapacity());
+            this.setChanged();
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
 
-        if (changed) {
+        if (this.isTransferring(level, pos, state)){
+            boolean changed = false;
+            for (Direction outputSide : this.getOutputDirections(level, pos, state)) {
+                int transferable = Math.min(this.energy, this.getMaxOutput(level, pos, state));
+
+                BlockPos consumerPos = pos.relative(outputSide);
+
+                int transferred = AbstractEnergyProvider.transferEnergy(level, consumerPos, level.getBlockState(consumerPos), transferable, outputSide.getOpposite());
+                this.energy -= transferred;
+
+                if (transferred > 0 && !changed)
+                    changed = true;
+
+            }
+
+            if (changed) {
+                this.setChanged();
+                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            }
+        }
+
+        if(!this.isConsuming(level, pos, state))
+            return;
+
+        int consumption = this.getConsumptionPerTick(level, pos, state);
+        if(this.energy >= consumption){
+            this.energy -= consumption;
+            this.performAction(level, pos, state);
             this.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -112,7 +128,7 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
         List<Direction> directions = new ArrayList<>();
 
         for (Direction side : Direction.values()) {
-            DirectionProperty facingProp = state.hasProperty(BaseEnergyBlock.FACING) ? BaseEnergyBlock.FACING : state.hasProperty(BaseEnergyBlock.HORIZONTAL_FACING) ? BaseEnergyBlock.HORIZONTAL_FACING : null;
+            EnumProperty<Direction> facingProp = state.hasProperty(BaseEnergyBlock.FACING) ? BaseEnergyBlock.FACING : state.hasProperty(BaseEnergyBlock.HORIZONTAL_FACING) ? BaseEnergyBlock.HORIZONTAL_FACING : null;
             EnumProperty<BaseEnergyBlock.IOMode> sideMode = BaseEnergyBlock.calculateIOSide(facingProp != null ? state.getValue(facingProp) : Direction.NORTH, side);
 
             if (state.hasProperty(sideMode) && state.getValue(sideMode).isInput())
@@ -127,7 +143,7 @@ public abstract class AbstractEnergyContainer extends BlockEntity implements IEn
         List<Direction> directions = new ArrayList<>();
 
         for (Direction side : Direction.values()) {
-            DirectionProperty facingProp = state.hasProperty(BaseEnergyBlock.FACING) ? BaseEnergyBlock.FACING : state.hasProperty(BaseEnergyBlock.HORIZONTAL_FACING) ? BaseEnergyBlock.HORIZONTAL_FACING : null;
+            EnumProperty<Direction> facingProp = state.hasProperty(BaseEnergyBlock.FACING) ? BaseEnergyBlock.FACING : state.hasProperty(BaseEnergyBlock.HORIZONTAL_FACING) ? BaseEnergyBlock.HORIZONTAL_FACING : null;
             EnumProperty<BaseEnergyBlock.IOMode> sideMode = BaseEnergyBlock.calculateIOSide(facingProp != null ? state.getValue(facingProp) : Direction.NORTH, side);
             if (state.hasProperty(sideMode) && state.getValue(sideMode).isOutput())
                 directions.add(side);

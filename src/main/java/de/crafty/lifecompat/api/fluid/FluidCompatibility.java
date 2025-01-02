@@ -165,7 +165,7 @@ public class FluidCompatibility {
                                 interactionHand,
                                 itemStack,
                                 bucketGroup.getFilledBucket(fluid),
-                                blockStatex -> true,
+                                blockStatex -> !(blockStatex.getBlock() instanceof LayeredCauldronBlock layeredCauldronBlock) || layeredCauldronBlock.isFull(blockStatex),
                                 cauldronInfo.fillBucketSound()
 
                         );
@@ -221,7 +221,7 @@ public class FluidCompatibility {
                                 interactionHand,
                                 itemStack,
                                 bucketGroup.getFilledBucket(block),
-                                blockStatex -> true,
+                                blockStatex -> !(blockStatex.getBlock() instanceof LayeredCauldronBlock layeredCauldronBlock) || layeredCauldronBlock.isFull(blockStatex),
                                 cauldronInfo.fillBucketSound()
 
                         );

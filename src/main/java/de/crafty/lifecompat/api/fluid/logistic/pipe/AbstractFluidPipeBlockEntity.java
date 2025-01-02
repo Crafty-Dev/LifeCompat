@@ -8,6 +8,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -147,16 +148,16 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
 
         this.initChunkCache();
         this.initTransferModes();
-        this.updatePipe((ServerLevel) this.getLevel(), List.of());
+        this.updatePipe((ServerLevel) this.getLevel(), List.of(), true);
     }
 
     public void onDestroyed() {
         if (this.initialized)
-            this.updatePipe((ServerLevel) this.getLevel(), List.of(this.getBlockPos()));
+            this.updatePipe((ServerLevel) this.getLevel(), List.of(this.getBlockPos()), false);
     }
 
-    public void validateNetwork() {
-        this.updatePipe((ServerLevel) this.getLevel(), List.of());
+    public void validateNetwork(boolean ignoreFluidBuffer) {
+        this.updatePipe((ServerLevel) this.getLevel(), List.of(), ignoreFluidBuffer);
     }
 
     public void fluidTick(ServerLevel level, BlockPos pos, BlockState state) {
@@ -186,7 +187,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
                     if (this.fluid == Fluids.EMPTY) {
                         this.setFluid(containerFluid);
                         this.setBuffer(extracted);
-                        this.validateNetwork();
+                        this.validateNetwork(false);
                     } else
                         this.setBuffer(this.getBuffer() + extracted);
 
@@ -254,14 +255,14 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         boolean changed = false;
 
         if (blockEntity.lastTick < level.getGameTime() - 1)
-            blockEntity.updatePipe((ServerLevel) level, List.of());
+            blockEntity.updatePipe((ServerLevel) level, List.of(), false);
         else {
             blockEntity.lastTick = level.getGameTime();
             changed = true;
         }
 
         if (blockEntity.chunkDataChangedToUnloaded((ServerLevel) level))
-            blockEntity.updatePipe((ServerLevel) level, List.of());
+            blockEntity.updatePipe((ServerLevel) level, List.of(), false);
 
         if (blockEntity.emptyTick >= 0) {
             if (blockEntity.getBuffer() > 0) {
@@ -273,7 +274,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
 
             if (blockEntity.emptyTick >= 5) {
                 blockEntity.emptyTick = -1;
-                blockEntity.validateNetwork();
+                blockEntity.validateNetwork(false);
             }
         }
 
@@ -283,7 +284,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         blockEntity.fluidTick((ServerLevel) level, pos, state);
     }
 
-    private void updatePipe(ServerLevel level, List<BlockPos> excludedPositions) {
+    private void updatePipe(ServerLevel level, List<BlockPos> excludedPositions, boolean ignoreFluidBuffer) {
         List<BlockPos> pipes = new ArrayList<>();
         this.trackPipes(level, this.getBlockPos(), pipes, excludedPositions);
 
@@ -318,7 +319,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
                     insertionTargets.add(new FluidContainerTarget(relative, side));
             }
 
-            if (level.getBlockEntity(pipePos) instanceof AbstractFluidPipeBlockEntity fluidPipe && fluidPipe.getBufferedFluid() != Fluids.EMPTY && fluidPipe.getBuffer() > 0)
+            if (level.getBlockEntity(pipePos) instanceof AbstractFluidPipeBlockEntity fluidPipe && fluidPipe.getBufferedFluid() != Fluids.EMPTY && (ignoreFluidBuffer || fluidPipe.getBuffer() > 0))
                 currentFluid = fluidPipe.getBufferedFluid();
         }
 
@@ -381,7 +382,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         this.setTransferMode(direction, current.next());
 
         if (this.getLevel() instanceof ServerLevel serverLevel)
-            this.updatePipe(serverLevel, List.of());
+            this.updatePipe(serverLevel, List.of(), false);
     }
 
     @Override
@@ -444,7 +445,7 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
 
-        this.fluid = BuiltInRegistries.FLUID.get(ResourceLocation.parse(tag.getString("fluid")));
+        this.fluid = BuiltInRegistries.FLUID.getValue(ResourceLocation.parse(tag.getString("fluid")));
 
         this.buffer = tag.getInt("buffer");
         this.bufferCapacity = tag.getInt("bufferCapacity");
@@ -463,21 +464,21 @@ public abstract class AbstractFluidPipeBlockEntity extends BlockEntity {
         });
 
         this.fluidExtractionTargets.clear();
-        ListTag extractionTargetTagList = tag.getList("extractionTargets", 9);
+        ListTag extractionTargetTagList = tag.getList("extractionTargets", Tag.TAG_COMPOUND);
         extractionTargetTagList.forEach(tag1 -> {
             CompoundTag extractionTag = (CompoundTag) tag1;
             this.fluidExtractionTargets.add(new FluidContainerTarget(BlockPos.of(extractionTag.getLong("pos")), Direction.valueOf(extractionTag.getString("side"))));
         });
 
         this.fluidInsertionTargets.clear();
-        ListTag insertionTargetTagList = tag.getList("extractionTargets", 9);
+        ListTag insertionTargetTagList = tag.getList("insertionTargets", Tag.TAG_COMPOUND);
         insertionTargetTagList.forEach(tag1 -> {
             CompoundTag insertionTag = (CompoundTag) tag1;
             this.fluidInsertionTargets.add(new FluidContainerTarget(BlockPos.of(insertionTag.getLong("pos")), Direction.valueOf(insertionTag.getString("side"))));
         });
 
         this.fluidInsertionQueue.clear();
-        ListTag insertionQueueTagList = tag.getList("insertionQueue", 9);
+        ListTag insertionQueueTagList = tag.getList("insertionQueue", Tag.TAG_COMPOUND);
         insertionQueueTagList.forEach(tag1 -> {
             CompoundTag insertionTag = (CompoundTag) tag1;
             this.fluidInsertionQueue.add(new FluidContainerTarget(BlockPos.of(insertionTag.getLong("pos")), Direction.valueOf(insertionTag.getString("side"))));

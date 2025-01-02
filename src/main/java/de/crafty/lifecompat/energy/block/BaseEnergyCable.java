@@ -9,10 +9,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -61,22 +64,22 @@ public abstract class BaseEnergyCable extends BaseEntityBlock {
     }
 
     @Override
-    protected @NotNull BlockState updateShape(BlockState blockState, Direction direction, BlockState neighborState, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos neighborPos) {
-        if (neighborState.getBlock() instanceof BaseEnergyCable)
-            blockState = blockState.setValue(ENERGY, neighborState.getValue(ENERGY));
+    protected BlockState updateShape(BlockState blockState, LevelReader levelReader, ScheduledTickAccess scheduledTickAccess, BlockPos blockPos, Direction direction, BlockPos blockPos2, BlockState blockState2, RandomSource randomSource) {
+        if (blockState2.getBlock() instanceof BaseEnergyCable)
+            blockState = blockState.setValue(ENERGY, blockState2.getValue(ENERGY));
 
         if (direction == Direction.NORTH)
-            return blockState.setValue(NORTH, BaseEnergyCable.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(NORTH, BaseEnergyCable.getConnectionStateForNeighbor(levelReader, blockPos, direction));
         if (direction == Direction.EAST)
-            return blockState.setValue(EAST, BaseEnergyCable.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(EAST, BaseEnergyCable.getConnectionStateForNeighbor(levelReader, blockPos, direction));
         if (direction == Direction.SOUTH)
-            return blockState.setValue(SOUTH, BaseEnergyCable.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(SOUTH, BaseEnergyCable.getConnectionStateForNeighbor(levelReader, blockPos, direction));
         if (direction == Direction.WEST)
-            return blockState.setValue(WEST, BaseEnergyCable.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(WEST, BaseEnergyCable.getConnectionStateForNeighbor(levelReader, blockPos, direction));
         if (direction == Direction.UP)
-            return blockState.setValue(UP, BaseEnergyCable.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(UP, BaseEnergyCable.getConnectionStateForNeighbor(levelReader, blockPos, direction));
         if (direction == Direction.DOWN)
-            return blockState.setValue(DOWN, BaseEnergyCable.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(DOWN, BaseEnergyCable.getConnectionStateForNeighbor(levelReader, blockPos, direction));
 
         return blockState;
     }
@@ -104,7 +107,7 @@ public abstract class BaseEnergyCable extends BaseEntityBlock {
         return false;
     }
 
-    public static ConnectionState getConnectionStateForNeighbor(LevelAccessor level, BlockPos pos, Direction direction) {
+    public static ConnectionState getConnectionStateForNeighbor(LevelReader level, BlockPos pos, Direction direction) {
         if (level.getBlockState(pos.relative(direction)).getBlock() instanceof BaseEnergyCable)
             return ConnectionState.TRANSFER;
 

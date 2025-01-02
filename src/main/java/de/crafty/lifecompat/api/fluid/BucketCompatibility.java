@@ -14,7 +14,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
@@ -65,8 +65,8 @@ public class BucketCompatibility {
     public static ItemStack getFilledBucket(BucketItem emptyBucket, Fluid fluid) {
         for (BucketGroup type : BUCKET_GROUPS.values()) {
             if (type.contains(emptyBucket)) return type.getFilledBucket(fluid);
-
         }
+
         return ItemStack.EMPTY;
     }
 
@@ -247,7 +247,7 @@ public class BucketCompatibility {
     static final CauldronInteraction FILL_POWDER_SNOW = (blockState, level, blockPos, player, interactionHand, itemStack) -> BucketCompatibility.emptyBucket(level, blockPos, player, interactionHand, itemStack, Blocks.POWDER_SNOW_CAULDRON.defaultBlockState().setValue(LayeredCauldronBlock.LEVEL, 3), SoundEvents.BUCKET_EMPTY_POWDER_SNOW);
 
 
-    public static ItemInteractionResult emptyBucket(Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, ItemStack filledStack, BlockState blockState, SoundEvent soundEvent) {
+    public static InteractionResult emptyBucket(Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, ItemStack filledStack, BlockState blockState, SoundEvent soundEvent) {
         if (!level.isClientSide) {
             Item item = filledStack.getItem();
             player.setItemInHand(interactionHand, ItemUtils.createFilledResult(filledStack, player, BucketCompatibility.getEmptyBucket(filledStack.getItem())));
@@ -258,12 +258,12 @@ public class BucketCompatibility {
             level.gameEvent(null, GameEvent.FLUID_PLACE, blockPos);
         }
 
-        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
-    static ItemInteractionResult fillBucket(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, ItemStack emptyStack, ItemStack filledStack, Predicate<BlockState> predicate, SoundEvent soundEvent) {
+    static InteractionResult fillBucket(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, ItemStack emptyStack, ItemStack filledStack, Predicate<BlockState> predicate, SoundEvent soundEvent) {
         if (!predicate.test(blockState)) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.PASS;
         } else {
             if (!level.isClientSide) {
                 Item item = emptyStack.getItem();
@@ -275,7 +275,7 @@ public class BucketCompatibility {
                 level.gameEvent(null, GameEvent.FLUID_PICKUP, blockPos);
             }
 
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            return InteractionResult.SUCCESS;
         }
     }
 

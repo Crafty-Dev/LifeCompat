@@ -5,10 +5,13 @@ import de.crafty.lifecompat.api.fluid.logistic.container.IFluidContainerBlock;
 import de.crafty.lifecompat.energy.block.BaseEnergyCable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -72,19 +75,19 @@ public abstract class BaseFluidPipeBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected @NotNull BlockState updateShape(BlockState blockState, Direction direction, BlockState neighborState, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos neighborPos) {
+    protected BlockState updateShape(BlockState blockState, LevelReader levelReader, ScheduledTickAccess scheduledTickAccess, BlockPos blockPos, Direction direction, BlockPos blockPos2, BlockState blockState2, RandomSource randomSource) {
         if (direction == Direction.NORTH)
-            return blockState.setValue(NORTH, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(NORTH, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelReader, blockPos, direction));
         if (direction == Direction.EAST)
-            return blockState.setValue(EAST, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(EAST, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelReader, blockPos, direction));
         if (direction == Direction.SOUTH)
-            return blockState.setValue(SOUTH, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(SOUTH, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelReader, blockPos, direction));
         if (direction == Direction.WEST)
-            return blockState.setValue(WEST, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(WEST, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelReader, blockPos, direction));
         if (direction == Direction.UP)
-            return blockState.setValue(UP, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(UP, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelReader, blockPos, direction));
         if (direction == Direction.DOWN)
-            return blockState.setValue(DOWN, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelAccessor, blockPos, direction));
+            return blockState.setValue(DOWN, BaseFluidPipeBlock.getConnectionStateForNeighbor(levelReader, blockPos, direction));
 
         return blockState;
     }
@@ -102,7 +105,7 @@ public abstract class BaseFluidPipeBlock extends BaseEntityBlock {
         return fluidsPresent.size() > 1;
     }
 
-    public static ConnectionState getConnectionStateForNeighbor(LevelAccessor level, BlockPos pos, Direction side) {
+    public static ConnectionState getConnectionStateForNeighbor(LevelReader level, BlockPos pos, Direction side) {
         if (level.getBlockState(pos.relative(side)).getBlock() instanceof IFluidContainerBlock fluidContainerBlock && fluidContainerBlock.canConnectPipe(level.getBlockState(pos.relative(side)), side.getOpposite()))
             return ConnectionState.ATTACHED;
 
@@ -117,7 +120,7 @@ public abstract class BaseFluidPipeBlock extends BaseEntityBlock {
         if (level.isClientSide()) return;
 
         if (blockState.is(oldState.getBlock()) && level.getBlockEntity(blockPos) instanceof AbstractFluidPipeBlockEntity pipe) {
-            pipe.validateNetwork();
+            pipe.validateNetwork(true);
         }
 
         if (!blockState.is(oldState.getBlock()) && level.getBlockEntity(blockPos) instanceof AbstractFluidPipeBlockEntity pipe) {
